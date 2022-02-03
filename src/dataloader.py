@@ -40,4 +40,4 @@ class DeepFashion(Dataset):
 
         attributes = self.df_labels[self.df_labels.index == cur_id].values.flatten()
         
-        return img, attributes.astype(float)
+        return img, attributes
