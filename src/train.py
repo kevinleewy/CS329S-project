@@ -71,7 +71,7 @@ def train():
 
                 outputs = torch.sigmoid(outputs)
                 predictions = torch.round(outputs)
-                total += attributes.size(0)
+                total += attributes.size(0) * attributes.size(1)
                 correct += (predictions == attributes).sum().cpu().item()
             accuracy = 100 * correct / total
             print("Accuracy: {}%".format(accuracy))
