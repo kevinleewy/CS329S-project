@@ -26,7 +26,7 @@ def set_seed(seed: int):
 
 def train():
 
-    set_seed()
+    set_seed(RNG_SEED)
 
     datasets, num_labels = load_datasets(base_path=BASE_PATH)
 
