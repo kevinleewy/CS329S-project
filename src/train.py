@@ -6,8 +6,8 @@ from tqdm import tqdm
 from model import ResnetDummy
 from dataloader import load_datasets
 
-# BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark'
-BASE_PATH = '/scratch/users/avento/deepfashion'
+BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark'
+# BASE_PATH = '/scratch/users/avento/deepfashion'
 LEARNING_RATE = 0.01
 EPOCHS = 50
 BATCH_SIZE = 64
