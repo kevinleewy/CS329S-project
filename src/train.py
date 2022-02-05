@@ -50,35 +50,43 @@ def train():
 
     for epoch in range(EPOCHS):
         model.train()
-        for imgs, attributes in tqdm(train_dataloader):
-            imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
-            
-            model.zero_grad()
-            out = model(imgs)
+        with tqdm(train_dataloader) as pbar:
+            for imgs, attributes in pbar:
+                imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
+                
+                model.zero_grad()
+                out = model(imgs)
 
-            loss = criterion(out, attributes)
-            loss.backward()
+                loss = criterion(out, attributes)
+                loss.backward()
 
-            optimizer.step()
+                optimizer.step()
+
+                pbar.set_description('Train Loss: {:.4f}'.format(
+                    loss.item(),
+                ))
 
         model.eval()
         with torch.no_grad():
             correct = 0.
             total = 0.
-            for imgs, attributes in tqdm(eval_dataloader):
-                imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
-                out = model(imgs)
+            with tqdm(eval_dataloader) as pbar:
+                for imgs, attributes in pbar:
+                    imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
+                    out = model(imgs)
 
-                outputs = torch.sigmoid(outputs)
-                predictions = torch.round(outputs)
-                total += attributes.size(0) * attributes.size(1)
-                correct += (predictions == attributes).sum().cpu().item()
-            accuracy = 100 * correct / total
-            print("Accuracy: {}%".format(accuracy))
+                    outputs = torch.sigmoid(outputs)
+                    predictions = torch.round(outputs)
+                    total += attributes.size(0) * attributes.size(1)
+                    correct += (predictions == attributes).sum().cpu().item()
+                accuracy = 100 * correct / total
 
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
-                torch.save(model.state_dict(), os.path.join(BASE_PATH, "best_model.pt"))
+                pbar.set_description('Validation Accuracy: {:.4f}'.format(accuracy))
+
+                # Save model if achieved best accuracy
+                if accuracy > best_accuracy:
+                    best_accuracy = accuracy
+                    torch.save(model.state_dict(), os.path.join(BASE_PATH, "best_model.pt"))
 
         if epoch % WEIGHTS_SAVE_FREQUENCY == 0:
             torch.save({
