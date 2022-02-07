@@ -4,6 +4,7 @@ import random
 import torch
 from torch import nn
 from tqdm import tqdm
+from datetime import datetime
 
 from model import ResnetDummy
 from dataloader import load_datasets
@@ -16,6 +17,7 @@ BATCH_SIZE = 64
 WEIGHTS_SAVE_FREQUENCY = 10
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 RNG_SEED = 17
+NOW = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
 def set_seed(seed: int):
     random.seed(seed)
@@ -47,6 +49,8 @@ def train():
 
     best_accuracy = 0.0
 
+    os.makedirs(os.path.join(BASE_PATH, NOW), exist_ok=True)
+
     for epoch in range(EPOCHS):
         model.train()
         with tqdm(train_dataloader) as pbar:
@@ -74,18 +78,18 @@ def train():
                     imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
                     out = model(imgs)
 
-                    outputs = torch.sigmoid(outputs)
+                    outputs = torch.sigmoid(out)
                     predictions = torch.round(outputs)
                     total += attributes.size(0) * attributes.size(1)
                     correct += (predictions == attributes).sum().cpu().item()
-                accuracy = 100 * correct / total
+                    accuracy = 100 * correct / total
 
-                pbar.set_description('Validation Accuracy: {:.4f}'.format(accuracy))
+                    pbar.set_description('Validation Accuracy: {:.4f}'.format(accuracy))
 
                 # Save model if achieved best accuracy
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
-                    torch.save(model.state_dict(), os.path.join(BASE_PATH, "best_model.pt"))
+                    torch.save(model.state_dict(), os.path.join(BASE_PATH, NOW, "best_model.pt"))
 
         if epoch % WEIGHTS_SAVE_FREQUENCY == 0:
             torch.save({
@@ -93,7 +97,7 @@ def train():
                 "best_accuracy": best_accuracy,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
-            }, os.path.join(BASE_PATH, f"checkpoint_{epoch}.pt"))
+            }, os.path.join(BASE_PATH, NOW, f"checkpoint_{epoch}.pt"))
     
     # Save one last checkpoint
     torch.save({
@@ -101,7 +105,7 @@ def train():
         "best_accuracy": best_accuracy,
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
-    }, os.path.join(BASE_PATH, f"checkpoint_{epoch}.pt"))
+    }, os.path.join(BASE_PATH, NOW, f"checkpoint_{epoch}.pt"))
 
 
     # TODO: Add query/gallery split
