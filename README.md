@@ -1,19 +1,28 @@
-# CS329S-project
+# CS329S Project
 
 This repository contains code used to develop our project for Stanford's CS329S course.
 
 ## Setup
 
-From within the `src` folder, run:
+From within the `src` dir, run:
 
 ```bash
-pip install -r requirements.txt
+conda env create -f environment.yml
+conda activate cs329s_project
+```
+
+## Run App
+
+From within the `src` dir, run:
+
+```bash
+streamlit run app.py
 ```
 
 ## Train
 
-From within the `src` folder, run:
+From within the `src` dir, run:
 
 ```bash
-python src/train.py
+python models/train.py
 ```
