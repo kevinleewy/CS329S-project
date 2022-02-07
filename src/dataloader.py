@@ -87,7 +87,7 @@ class DeepFashion(Dataset):
         item_id = self.dataset[idx][0]
         img_path = self.dataset[idx][1]
 
-        full_img_path = os.path.join(self.base_path, 'IMG', img_path)
+        full_img_path = os.path.join(self.base_path, img_path)
         x = Image.open(full_img_path)
         
         y = self.attrs[item_id]
