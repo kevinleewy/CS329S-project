@@ -82,7 +82,7 @@ def train():
                     predictions = torch.round(outputs)
                     total += attributes.size(0) * attributes.size(1)
                     correct += (predictions == attributes).sum().cpu().item()
-                    accuracy = 100 * correct / total
+                    accuracy = 100 * correct / (total + 1e-12)
 
                     pbar.set_description('Validation Accuracy: {:.4f}'.format(accuracy))
 
