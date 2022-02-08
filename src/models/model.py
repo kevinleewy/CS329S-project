@@ -12,7 +12,7 @@ class ResnetDummy(nn.Module):
         self.resnet.fc = nn.Linear(num_ftrs, embedding_dim)
         self.classifier = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(self.num_labels)
+            nn.Linear(embedding_dim, self.num_labels)
         )
 
         if freeze_pretrain:
