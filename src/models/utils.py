@@ -19,7 +19,7 @@ def compute_imbalanced_class_weights(samples_per_cls, normalize=False, as_tensor
     N = sum(samples_per_cls)
     beta = (N - 1) / N
     effective_num = (1.0 - np.power(beta, samples_per_cls)) / (1.0 - beta)
-    weights = 1 / np.array(effective_num)
+    weights = 1 / (np.array(effective_num) + 1e-12)
 
     if normalize:
         weights = weights / np.sum(weights)
