@@ -1,0 +1,14 @@
+name: cs329s_project
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - pip
+  - pytorch
+  - torchvision
+  - tqdm
+  - pip:
+    - numpy
+    - pandas
+    - pillow
+    - streamlit
