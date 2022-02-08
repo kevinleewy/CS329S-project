@@ -8,6 +8,7 @@ from datetime import datetime
 
 from model import ResnetDummy
 from dataloader import load_datasets
+from utils import compute_imbalanced_class_weights
 
 # BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark'
 BASE_PATH = '/scratch/users/avento/deepfashion'
@@ -29,7 +30,10 @@ def train():
 
     set_seed(RNG_SEED)
 
-    datasets, num_labels = load_datasets(base_path=BASE_PATH)
+    datasets, attr_counts = load_datasets(base_path=BASE_PATH)
+    num_labels = attr_counts.shape[0]
+    weights = compute_imbalanced_class_weights(attr_counts, as_tensor=True)
+    weights.to(DEVICE)
 
     train_dataloader = torch.utils.data.DataLoader(datasets['train'],
                                         batch_size=BATCH_SIZE,
@@ -45,7 +49,7 @@ def train():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    criterion = nn.BCEWithLogitsLoss(reduction='mean') # TODO: Confirm this works when doing vector to vector within each sample
+    criterion = nn.BCEWithLogitsLoss(weight=weights, reduction='mean') # TODO: Confirm this works when doing vector to vector within each sample
 
     best_accuracy = 0.0
 
