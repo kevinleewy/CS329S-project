@@ -49,9 +49,12 @@ def load_datasets(
     dataset_images_path = os.path.join(base_path, 'train_dataset_images.npy')
     dataset_images = np.load(dataset_images_path, allow_pickle=True)
 
+    dataset_attr_counts_path = os.path.join(base_path, 'train_dataset_attr_counts.npy')
+    dataset_attr_counts = np.load(dataset_attr_counts_path, allow_pickle=True)
+
     n, _ = dataset_images.shape
-    _, n_labels = dataset_attrs.shape
-    n_labels = n_labels - 1 # First column is image_id
+
+    assert dataset_attrs.shape[1] - 1 == dataset_attr_counts.shape[0]
 
     # Convert dataset_attrs to dict
     dataset_attrs = { row[0]: row[1:].astype(np.float) for row in dataset_attrs }
@@ -70,7 +73,7 @@ def load_datasets(
 
         datasets[split] = DeepFashion(dataset_splits[i], dataset_attrs, base_path, transform=transform)
 
-    return datasets, n_labels
+    return datasets, dataset_attr_counts
 
 class DeepFashion(Dataset):
     def __init__(self, dataset=[], attrs={}, base_path:str='/', transform=None):
