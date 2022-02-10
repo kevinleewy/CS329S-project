@@ -13,7 +13,7 @@ from utils import compute_imbalanced_class_weights, compute_f1
 
 # BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark'
 BASE_PATH = '/scratch/users/avento/deepfashion'
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 EPOCHS = 50
 BATCH_SIZE = 64
 WEIGHTS_SAVE_FREQUENCY = 10

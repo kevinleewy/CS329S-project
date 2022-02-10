@@ -43,13 +43,13 @@ def load_datasets(
     data_transforms: Dict[str, Any]=default_data_transforms
 ):
     
-    dataset_attrs_path = os.path.join(base_path, 'train_dataset_attr.npy')
+    dataset_attrs_path = os.path.join(base_path, 'train_dataset_attr_13.npy')
     dataset_attrs = np.load(dataset_attrs_path, allow_pickle=True)
 
     dataset_images_path = os.path.join(base_path, 'train_dataset_images.npy')
     dataset_images = np.load(dataset_images_path, allow_pickle=True)
 
-    dataset_attr_counts_path = os.path.join(base_path, 'train_dataset_attr_counts.npy')
+    dataset_attr_counts_path = os.path.join(base_path, 'train_dataset_attr_13_counts.npy')
     dataset_attr_counts = np.load(dataset_attr_counts_path, allow_pickle=True)
 
     n, _ = dataset_images.shape
