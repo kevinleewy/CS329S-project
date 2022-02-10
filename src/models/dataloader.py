@@ -37,6 +37,9 @@ default_data_transforms = {
     ]),
 }
 
+def get_data_transforms():
+    return default_data_transforms
+
 def load_datasets(
     base_path:str='/',
     splits: List = [0.8, 0.1, 0.1],
