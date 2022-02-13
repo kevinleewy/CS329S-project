@@ -1,4 +1,6 @@
 # Standard Imports
+import os
+import sys
 import random
 import time
 from datetime import datetime
@@ -9,6 +11,8 @@ import numpy as np
 import streamlit as st
 
 # Project Imports
+# data_package_root = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(os.path.dirname(data_package_root))
 from common.config import Config as PipelineConfig
 from common.image_utils import get_uri, InputImage
 from common.streamlit_utils import read_from_session
@@ -78,10 +82,10 @@ class LandingPage:
 
 
   @classmethod
-  def update_image_row(cls, placeholder, imgs, key, build_header_fn=lambda: None):
+  def update_image_row(cls, placeholder, img_uris, key, build_header_fn=lambda: None):
     with placeholder.container():
       build_header_fn()
-      img_uris = [get_uri(img) for img in imgs]
+      # img_uris = [get_uri(img) for img in imgs]
       image_carousel(img_uris, key=key)
 
 
@@ -116,11 +120,10 @@ class LandingPage:
 
 
   @classmethod
-  @st.cache
+  # @st.cache
   def get_output_images(cls, input_imgs, model_callback):
-    output_imgs = model_callback(input_imgs, sleep=(cls.STEPS_STATUSES["find_status"] == StepStatus.PROCESS))
-    output_img_uris = [get_uri(img) for img in output_imgs]
-    return output_imgs, output_img_uris
+    output_img_uris = model_callback(input_imgs) #, sleep=(cls.STEPS_STATUSES["find_status"] == StepStatus.PROCESS))
+    return output_img_uris
 
 
   @classmethod
@@ -170,14 +173,14 @@ class LandingPage:
       if len(read_from_session("input_imgs", [])) > 0:
         cls.update_image_row(
           input_placeholder,
-          st.session_state.input_imgs,
+          [get_uri(img) for img in st.session_state.input_imgs],
           key="input_imgs_row",
           build_header_fn = cls.build_input_row_header,
         )
     
     # Get Model Outputs
     if st.session_state.current_step in ["find_status"]:
-      st.session_state.output_imgs, st.session_state.output_img_uris = cls.get_output_images(st.session_state.input_imgs, model_callback)
+      st.session_state.output_img_uris = cls.get_output_images(st.session_state.input_imgs, model_callback)
       cls.update_steps_header(current_step_override="explore_status")
 
     # Visualize Model Outputs
@@ -186,7 +189,7 @@ class LandingPage:
       with output_placeholder.container():
         cls.update_image_row(
           output_placeholder,
-          st.session_state.output_imgs,
+          st.session_state.output_img_uris,
           key="output_imgs_row",
           build_header_fn = cls.build_output_row_header,
         )
