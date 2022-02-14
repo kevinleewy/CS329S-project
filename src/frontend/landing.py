@@ -11,8 +11,6 @@ import numpy as np
 import streamlit as st
 
 # Project Imports
-# data_package_root = os.path.dirname(os.path.realpath(__file__))
-# sys.path.append(os.path.dirname(data_package_root))
 from common.config import Config as PipelineConfig
 from common.image_utils import get_uri, InputImage
 from common.streamlit_utils import read_from_session
@@ -26,6 +24,7 @@ class DisplayDirections(str, Enum):
 
 class Config:
   DEBUG = PipelineConfig.DEBUG
+  MULTIPLE_IMAGES = False
   IMAGE_CAROUSELS_DIRECTION = DisplayDirections.VERTICAL
 
 
@@ -105,30 +104,36 @@ class LandingPage:
   def build_input_component(cls, upload_placeholder, input_placeholder, input_imgs):
     with upload_placeholder.container():
       upload_columns = st.columns(2)
-      with upload_columns[0].empty():
-        picture = st.camera_input("", key="input_camera")
-        if picture:
-          img = InputImage(picture.getvalue(), f"camera_picture_{datetime.now()}")
-          input_imgs.append(img)
-      
-      with upload_columns[1].empty():
-        uploaded_files = st.file_uploader("", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-        for uploaded_file in uploaded_files:
-          img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
-          input_imgs.append(img)
+      if Config.MULTIPLE_IMAGES:
+        with upload_columns[0].empty():
+          uploaded_files = st.file_uploader("", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+          for uploaded_file in uploaded_files:
+            img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
+            input_imgs.append(img)
+        with upload_columns[1].empty():
+          picture = st.camera_input("", key="input_camera")
+          if picture:
+            img = InputImage(picture.getvalue(), f"camera_picture_{datetime.now()}")
+            input_imgs.append(img)
+      else:
+        with upload_columns[0].empty():
+          uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"])
+          if uploaded_file is not None:
+            img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
+            input_imgs.append(img)
     return input_imgs
 
 
   @classmethod
-  # @st.cache
+  @st.cache
   def get_output_images(cls, input_imgs, model_callback):
-    output_img_uris = model_callback(input_imgs) #, sleep=(cls.STEPS_STATUSES["find_status"] == StepStatus.PROCESS))
+    output_img_uris = model_callback(input_imgs)
     return output_img_uris
 
 
   @classmethod
   def setup(cls, model_callback):
-    st.title("Welcome! 👋")
+    st.title("🧥 FashFlix")
     cls.steps_placeholder = st.empty()
     if "current_step" not in st.session_state:
       cls.update_steps_header(current_step_override="choose_status")
@@ -160,13 +165,14 @@ class LandingPage:
     if st.session_state.current_step in ["choose_status"]:
       st.session_state.input_imgs = cls.build_input_component(upload_placeholder, input_placeholder, [])
 
-    with button_columns[0]:
-      cls.RUN_BUTTON = st.button(
-        "Run Model",
-        key = "run_model",
-        on_click = lambda: cls.update_steps_header(current_step_override="find_status"),
-        disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_img_uris", [])) > 0),
-      )
+    if st.session_state.current_step in ["choose_status"]:
+      with button_columns[0]:
+        cls.RUN_BUTTON = st.button(
+          "Run Model",
+          key = "run_model",
+          on_click = lambda: cls.update_steps_header(current_step_override="find_status"),
+          disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_img_uris", [])) > 0),
+        )
 
     # Visualize Inputs
     if st.session_state.current_step in ["choose_status", "find_status", "explore_status"]:
@@ -194,13 +200,14 @@ class LandingPage:
           build_header_fn = cls.build_output_row_header,
         )
 
-    with button_columns[3]:
-      cls.RATE_BUTTON = st.button(
-        "Rate Recommendations",
-        key = "rate_fits",
-        on_click = lambda: cls.update_steps_header(current_step_override="rate_status"),
-        disabled = (len(read_from_session("output_img_uris", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
-      )
+    if st.session_state.current_step in ["explore_status"]:
+      with button_columns[3]:
+        cls.RATE_BUTTON = st.button(
+          "Rate Recommendations",
+          key = "rate_fits",
+          on_click = lambda: cls.update_steps_header(current_step_override="rate_status"),
+          disabled = (len(read_from_session("output_img_uris", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
+        )
     
     # Rate Model Outputs
     if st.session_state.current_step in ["rate_status"]:
