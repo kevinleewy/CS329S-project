@@ -32,6 +32,7 @@ class LandingPage:
   UPDATE_INPUT_CONTAINER = False
   RUN_BUTTON = None
   RATE_BUTTON = None
+  RESTART_BUTTON = None
 
   STEPS_STATUSES = {
     "choose_status": StepStatus.PROCESS,
@@ -132,6 +133,13 @@ class LandingPage:
 
 
   @classmethod
+  def restart_pipeline(cls):
+    st.session_state.current_step = "choose_status"
+    st.session_state.output_img_uris = []
+    st.session_state.votes = []
+
+
+  @classmethod
   def setup(cls, model_callback):
     st.title("🧥 FashFlix")
     cls.steps_placeholder = st.empty()
@@ -219,3 +227,12 @@ class LandingPage:
           st.session_state.votes += [vote]
           if Config.DEBUG:
             st.write(f"votes: {st.session_state.votes}")
+
+      if len(st.session_state.votes) == len(st.session_state.output_img_uris):
+        # Rated all images
+        with button_columns[0]:
+          cls.RESTART_BUTTON = st.button(
+            "Back Home",
+            key = "restart_process",
+            on_click = lambda: cls.restart_pipeline(),
+          )
