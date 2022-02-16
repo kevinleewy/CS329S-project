@@ -32,6 +32,7 @@ export const ImageCarousel = () => {
   const [isFocused, setIsFocused] = useState(false)
 
   const imgs = renderData.args["imgs"]
+  const texts = renderData.args["texts"] || []
   const show = renderData.args["show_count"] || 4.5
   const slide = renderData.args["slide_count"] || 4
 
@@ -47,7 +48,10 @@ export const ImageCarousel = () => {
     <StyledCarousel id="image_carousel" show={show} slide={slide} swiping={true}>
       {imgs.map((img, index) => {
         return (
-          <img height="200px" width="200px" src={img} key={"img" + index} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <img height="200px" width="200px" src={img} key={"img" + index} />
+            {texts[index] || ""}
+          </div>
         )
       })}
     </StyledCarousel>
