@@ -82,11 +82,11 @@ class LandingPage:
 
 
   @classmethod
-  def update_image_row(cls, placeholder, img_uris, key, build_header_fn=lambda: None):
+  def update_image_row(cls, placeholder, img_uris, key, texts=None, build_header_fn=lambda: None):
     with placeholder.container():
       build_header_fn()
       # img_uris = [get_uri(img) for img in imgs]
-      image_carousel(img_uris, key=key)
+      image_carousel(img_uris, texts=texts, key=key)
 
 
   @classmethod
@@ -128,14 +128,14 @@ class LandingPage:
   @classmethod
   @st.cache
   def get_output_images(cls, input_imgs, model_callback):
-    output_img_uris = model_callback(input_imgs)
-    return output_img_uris
+    output_imgs = model_callback(input_imgs)
+    return output_imgs
 
 
   @classmethod
   def restart_pipeline(cls):
     st.session_state.current_step = "choose_status"
-    st.session_state.output_img_uris = []
+    st.session_state.output_imgs = []
     st.session_state.votes = []
 
 
@@ -179,7 +179,7 @@ class LandingPage:
           "Run Model",
           key = "run_model",
           on_click = lambda: cls.update_steps_header(current_step_override="find_status"),
-          disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_img_uris", [])) > 0),
+          disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_imgs", [])) > 0),
         )
 
     # Visualize Inputs
@@ -194,17 +194,20 @@ class LandingPage:
     
     # Get Model Outputs
     if st.session_state.current_step in ["find_status"]:
-      st.session_state.output_img_uris = cls.get_output_images(st.session_state.input_imgs, model_callback)
+      st.session_state.output_imgs = cls.get_output_images(st.session_state.input_imgs, model_callback)
       cls.update_steps_header(current_step_override="explore_status")
 
     # Visualize Model Outputs
     if st.session_state.current_step in ["explore_status"]:
       cls.build_steps_header()
+      img_details = [(img["uri"], img["price"]) for img in st.session_state.output_imgs]
+      img_uris, details_texts = zip(*img_details)
       with output_placeholder.container():
         cls.update_image_row(
           output_placeholder,
-          st.session_state.output_img_uris,
-          key="output_imgs_row",
+          img_uris,
+          key = "output_imgs_row",
+          texts = details_texts,
           build_header_fn = cls.build_output_row_header,
         )
 
@@ -214,16 +217,17 @@ class LandingPage:
           "Rate Recommendations",
           key = "rate_fits",
           on_click = lambda: cls.update_steps_header(current_step_override="rate_status"),
-          disabled = (len(read_from_session("output_img_uris", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
+          disabled = (len(read_from_session("output_imgs", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
         )
     
     # Rate Model Outputs
     if st.session_state.current_step in ["rate_status"]:
       read_from_session("votes", [])
       main_placeholder.empty()
+      img_uris = [img["uri"] for img in st.session_state.output_imgs[::-1]] # currently ordered by recommendation score
       with main_placeholder.container():
         vote = swipable_cards(
-          st.session_state.output_img_uris[::-1], # currently ordered by recommendation score
+          img_uris,
           last_card_emoji = "🧥",
           key = "output_swipable_cards",
         )
@@ -232,7 +236,7 @@ class LandingPage:
           if Config.DEBUG:
             st.write(f"votes: {st.session_state.votes}")
 
-      if len(st.session_state.votes) == len(st.session_state.output_img_uris):
+      if len(st.session_state.votes) == len(st.session_state.output_imgs):
         votes_callback(st.session_state.votes)
         # Rated all images
         with button_columns[0]:

@@ -62,9 +62,9 @@ class App:
 			recommendation_uuids = recommender.get_recommendations(input_embeddings, embeddings_pdf)
 			recommendation_uuids = recommendation_uuids[0]
 			votes_df = pd.DataFrame({"recommendation_uuid": recommendation_uuids})
-			votes_df.to_csv(Config.VOTES_DF_PATH)
-			recommendation_images = database.get_images(recommendation_uuids)
-			return list(recommendation_images.values())
+			votes_df.to_csv(Config.VOTES_DF_PATH, index=False)
+			recommendations = database.get_images_and_metadata(recommendation_uuids)
+			return list(recommendations.values())
 
 		return model_callback
 
@@ -73,7 +73,7 @@ class App:
 	def votes_callback(cls, votes):
 		votes_df = read_df(Config.VOTES_DF_PATH)
 		votes_df["vote"] = votes
-		votes_df.to_csv(Config.VOTES_DF_PATH)
+		votes_df.to_csv(Config.VOTES_DF_PATH, index=False)
 
 
 	@classmethod

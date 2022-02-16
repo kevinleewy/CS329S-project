@@ -220,12 +220,13 @@ class FashionDatabase:
 			self.embeddings_database.update_row(row_uuid, embedding_row, save=save)
 
 
-	def get_images(self, uuids):
-		img_uris = {}
+	def get_images_and_metadata(self, uuids):
+		outputs = {}
 		for uuid in uuids:
 			uuid_row = self.metadata_database.get_row(uuid)
-			img_uris[uuid] = get_path_uri(str(Path(data_package_root) / uuid_row["uri"]))
-		return img_uris
+			img_uri = get_path_uri(str(Path(data_package_root) / uuid_row["uri"]))
+			outputs[uuid] = {"uri": img_uri, "price": uuid_row["price"], "rating": uuid_row["rating"]}
+		return outputs
 
 
 if __name__ == "__main__":
