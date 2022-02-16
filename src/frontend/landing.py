@@ -140,7 +140,7 @@ class LandingPage:
 
 
   @classmethod
-  def setup(cls, model_callback):
+  def setup(cls, model_callback, votes_callback):
     st.title("🧥 FashFlix")
     cls.steps_placeholder = st.empty()
     if "current_step" not in st.session_state:
@@ -222,13 +222,18 @@ class LandingPage:
       read_from_session("votes", [])
       main_placeholder.empty()
       with main_placeholder.container():
-        vote = swipable_cards(st.session_state.output_img_uris, last_card_emoji="🧥", key="output_swipable_cards")
+        vote = swipable_cards(
+          st.session_state.output_img_uris[::-1], # currently ordered by recommendation score
+          last_card_emoji = "🧥",
+          key = "output_swipable_cards",
+        )
         if vote is not None:
           st.session_state.votes += [vote]
           if Config.DEBUG:
             st.write(f"votes: {st.session_state.votes}")
 
       if len(st.session_state.votes) == len(st.session_state.output_img_uris):
+        votes_callback(st.session_state.votes)
         # Rated all images
         with button_columns[0]:
           cls.RESTART_BUTTON = st.button(
