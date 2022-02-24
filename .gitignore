@@ -130,8 +130,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Dataset
-data/
-
 # Random
 **/.DS_Store
