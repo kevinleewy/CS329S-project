@@ -44,3 +44,9 @@ def compute_f1(targets, predictions, avg_per_attribute=True):
         f1 = f1_score(targets.flatten(), predictions.flatten())
     
     return f1
+
+
+def make_embedding_callback(model):
+    def callback(inputs):
+        return [model(img.img) for img in inputs]
+    return callback

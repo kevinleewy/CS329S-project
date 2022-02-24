@@ -1,4 +1,6 @@
 # Standard Imports
+import os
+import sys
 import random
 import time
 from datetime import datetime
@@ -22,6 +24,7 @@ class DisplayDirections(str, Enum):
 
 class Config:
   DEBUG = PipelineConfig.DEBUG
+  MULTIPLE_IMAGES = False
   IMAGE_CAROUSELS_DIRECTION = DisplayDirections.VERTICAL
 
 
@@ -29,6 +32,7 @@ class LandingPage:
   UPDATE_INPUT_CONTAINER = False
   RUN_BUTTON = None
   RATE_BUTTON = None
+  RESTART_BUTTON = None
 
   STEPS_STATUSES = {
     "choose_status": StepStatus.PROCESS,
@@ -78,11 +82,11 @@ class LandingPage:
 
 
   @classmethod
-  def update_image_row(cls, placeholder, imgs, key, build_header_fn=lambda: None):
+  def update_image_row(cls, placeholder, img_uris, key, texts=None, build_header_fn=lambda: None):
     with placeholder.container():
       build_header_fn()
-      img_uris = [get_uri(img) for img in imgs]
-      image_carousel(img_uris, key=key)
+      # img_uris = [get_uri(img) for img in imgs]
+      image_carousel(img_uris, texts=texts, key=key)
 
 
   @classmethod
@@ -101,31 +105,43 @@ class LandingPage:
   def build_input_component(cls, upload_placeholder, input_placeholder, input_imgs):
     with upload_placeholder.container():
       upload_columns = st.columns(2)
-      with upload_columns[0].empty():
-        picture = st.camera_input("", key="input_camera")
-        if picture:
-          img = InputImage(picture.getvalue(), f"camera_picture_{datetime.now()}")
-          input_imgs.append(img)
-      
-      with upload_columns[1].empty():
-        uploaded_files = st.file_uploader("", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-        for uploaded_file in uploaded_files:
-          img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
-          input_imgs.append(img)
+      if Config.MULTIPLE_IMAGES:
+        with upload_columns[0].empty():
+          uploaded_files = st.file_uploader("", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+          for uploaded_file in uploaded_files:
+            img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
+            input_imgs.append(img)
+        with upload_columns[1].empty():
+          picture = st.camera_input("", key="input_camera")
+          if picture:
+            img = InputImage(picture.getvalue(), f"camera_picture_{datetime.now()}")
+            input_imgs.append(img)
+      else:
+        with upload_columns[0].empty():
+          uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"])
+          if uploaded_file is not None:
+            img = InputImage(uploaded_file.getvalue(), uploaded_file.name)
+            input_imgs.append(img)
     return input_imgs
 
 
   @classmethod
   @st.cache
   def get_output_images(cls, input_imgs, model_callback):
-    output_imgs = model_callback(input_imgs, sleep=(cls.STEPS_STATUSES["find_status"] == StepStatus.PROCESS))
-    output_img_uris = [get_uri(img) for img in output_imgs]
-    return output_imgs, output_img_uris
+    output_imgs = model_callback(input_imgs)
+    return output_imgs
 
 
   @classmethod
-  def setup(cls, model_callback):
-    st.title("Welcome! 👋")
+  def restart_pipeline(cls):
+    st.session_state.current_step = "choose_status"
+    st.session_state.output_imgs = []
+    st.session_state.votes = []
+
+
+  @classmethod
+  def setup(cls, model_callback, votes_callback):
+    st.title("🧥 FashFlix")
     cls.steps_placeholder = st.empty()
     if "current_step" not in st.session_state:
       cls.update_steps_header(current_step_override="choose_status")
@@ -157,55 +173,75 @@ class LandingPage:
     if st.session_state.current_step in ["choose_status"]:
       st.session_state.input_imgs = cls.build_input_component(upload_placeholder, input_placeholder, [])
 
-    with button_columns[0]:
-      cls.RUN_BUTTON = st.button(
-        "Run Model",
-        key = "run_model",
-        on_click = lambda: cls.update_steps_header(current_step_override="find_status"),
-        disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_img_uris", [])) > 0),
-      )
+    if st.session_state.current_step in ["choose_status"]:
+      with button_columns[0]:
+        cls.RUN_BUTTON = st.button(
+          "Run Model",
+          key = "run_model",
+          on_click = lambda: cls.update_steps_header(current_step_override="find_status"),
+          disabled = (len(read_from_session("input_imgs", [])) <= 0) or (len(read_from_session("output_imgs", [])) > 0),
+        )
 
     # Visualize Inputs
     if st.session_state.current_step in ["choose_status", "find_status", "explore_status"]:
       if len(read_from_session("input_imgs", [])) > 0:
         cls.update_image_row(
           input_placeholder,
-          st.session_state.input_imgs,
+          [get_uri(img) for img in st.session_state.input_imgs],
           key="input_imgs_row",
           build_header_fn = cls.build_input_row_header,
         )
     
     # Get Model Outputs
     if st.session_state.current_step in ["find_status"]:
-      st.session_state.output_imgs, st.session_state.output_img_uris = cls.get_output_images(st.session_state.input_imgs, model_callback)
+      st.session_state.output_imgs = cls.get_output_images(st.session_state.input_imgs, model_callback)
       cls.update_steps_header(current_step_override="explore_status")
 
     # Visualize Model Outputs
     if st.session_state.current_step in ["explore_status"]:
       cls.build_steps_header()
+      img_details = [(img["uri"], img["price"]) for img in st.session_state.output_imgs]
+      img_uris, details_texts = zip(*img_details)
       with output_placeholder.container():
         cls.update_image_row(
           output_placeholder,
-          st.session_state.output_imgs,
-          key="output_imgs_row",
+          img_uris,
+          key = "output_imgs_row",
+          texts = details_texts,
           build_header_fn = cls.build_output_row_header,
         )
 
-    with button_columns[3]:
-      cls.RATE_BUTTON = st.button(
-        "Rate Recommendations",
-        key = "rate_fits",
-        on_click = lambda: cls.update_steps_header(current_step_override="rate_status"),
-        disabled = (len(read_from_session("output_img_uris", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
-      )
+    if st.session_state.current_step in ["explore_status"]:
+      with button_columns[3]:
+        cls.RATE_BUTTON = st.button(
+          "Rate Recommendations",
+          key = "rate_fits",
+          on_click = lambda: cls.update_steps_header(current_step_override="rate_status"),
+          disabled = (len(read_from_session("output_imgs", [])) <= 0) or (st.session_state.current_step in ["rate_status"]),
+        )
     
     # Rate Model Outputs
     if st.session_state.current_step in ["rate_status"]:
       read_from_session("votes", [])
       main_placeholder.empty()
+      img_uris = [img["uri"] for img in st.session_state.output_imgs[::-1]] # currently ordered by recommendation score
       with main_placeholder.container():
-        vote = swipable_cards(st.session_state.output_img_uris, last_card_emoji="🧥", key="output_swipable_cards")
+        vote = swipable_cards(
+          img_uris,
+          last_card_emoji = "🧥",
+          key = "output_swipable_cards",
+        )
         if vote is not None:
           st.session_state.votes += [vote]
           if Config.DEBUG:
             st.write(f"votes: {st.session_state.votes}")
+
+      if len(st.session_state.votes) == len(st.session_state.output_imgs):
+        votes_callback(st.session_state.votes)
+        # Rated all images
+        with button_columns[0]:
+          cls.RESTART_BUTTON = st.button(
+            "Back Home",
+            key = "restart_process",
+            on_click = lambda: cls.restart_pipeline(),
+          )

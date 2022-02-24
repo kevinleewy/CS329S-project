@@ -17,9 +17,23 @@ def get_data(img):
 
 
 def get_uri(image):
-  uri_data = base64.b64encode(image.img_data)
+  try:
+    uri_data = base64.b64encode(image.img_data)
+  except:
+    uri_data = base64.b64encode(image)
   uri_data = uri_data.decode()
   return f"data:image/png;base64,{uri_data}"
+
+
+def read_image(path):
+  return Image.open(path)
+
+
+def get_path_uri(path):
+  image = read_image(path)
+  image_data = get_data(image)
+  uri = get_uri(image_data)
+  return uri
 
 
 class ImagePreprocessor:
