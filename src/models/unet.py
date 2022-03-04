@@ -11,9 +11,12 @@ import numpy as np
 class Unet(nn.Module):
 
     def __init__(self,
-                 n_classes: int,
+                 num_labels: int, #classification labels
+                 n_classes: int, #segmentation classes
                  n_channels: int = 3,
-                 base_maps: int = 64):
+                 base_maps: int = 64,
+                 embedding_dim: int = 512,
+                 pretrained_path: str = None):
         super(Unet, self).__init__()
 
         # Compute contracting blocks
@@ -54,7 +57,23 @@ class Unet(nn.Module):
                       padding=0),
         )
 
+        self.embedding = nn.Linear(1024 * 14 * 14, embedding_dim)
+        self.classifier = nn.Sequential(
+            nn.ReLU(),
+            nn.Linear(embedding_dim, num_labels)
+        )
+
+        if pretrained_path:
+            print('Loading pretrained weights for U-Net...')
+            state_dict = torch.load(pretrained_path, map_location='cpu')
+            missing_keys, unexpected_keys = self.load_state_dict(state_dict, strict=False)
+            print(f'Missing keys: {missing_keys}')
+            assert len(unexpected_keys) == 0
+
     def forward(self, images):
+
+        batch_size = images.size(0)
+
         # Contracting path forward propagation
         c_out_1 = self._c_out_1(images)
         c_out_2 = self._c_out_2(self._maxpool(c_out_1))
@@ -63,6 +82,7 @@ class Unet(nn.Module):
 
         # Bottleneck connects contracting end and expanding start
         bottleneck = self._bottleneck(self._maxpool(c_out_4))
+
         # Build expanding path input by upsampling
         e_input_1 = self._e_input_1(bottleneck)
         # return e_input_1, c_out_4
@@ -73,7 +93,27 @@ class Unet(nn.Module):
         e_input_4 = self._e_input_4(torch.cat((c_out_2, e_input_3), dim=1))
 
         # # End of expanding path
-        return self._output(torch.cat((c_out_1, e_input_4), axis=1))
+        seg_out = self._output(torch.cat((c_out_1, e_input_4), axis=1))
+
+        embedding = self.embedding(bottleneck.reshape(batch_size, -1))
+        classifier_out = self.classifier(embedding)
+
+        return classifier_out, seg_out
+
+    def embed(self, images):
+        batch_size = images.size(0)
+
+        # Contracting path forward propagation
+        c_out_1 = self._c_out_1(images)
+        c_out_2 = self._c_out_2(self._maxpool(c_out_1))
+        c_out_3 = self._c_out_3(self._maxpool(c_out_2))
+        c_out_4 = self._c_out_4(self._maxpool(c_out_3))
+
+        # Bottleneck connects contracting end and expanding start
+        bottleneck = self._bottleneck(self._maxpool(c_out_4))
+
+        embedding = self.embedding(bottleneck.reshape(batch_size, -1))
+        return embedding
 
 
 class DoubleConv2d(nn.Module):

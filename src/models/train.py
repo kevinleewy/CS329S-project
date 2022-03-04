@@ -7,7 +7,10 @@ from tqdm import tqdm
 from datetime import datetime
 import pickle
 
+from loss import SoftDiceLoss
+from metrics import mean_iou, dice_coefficient
 from model import ResnetDummy
+from unet import Unet
 from dataloader import load_datasets
 from utils import compute_imbalanced_class_weights, compute_f1
 
@@ -20,6 +23,9 @@ WEIGHTS_SAVE_FREQUENCY = 10
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 RNG_SEED = 17
 NOW = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+NUM_LABELS = 36 # 13, 36, or 347
+SEGMENT = True
+LAMBD = 0.1
 
 def set_seed(seed: int):
     random.seed(seed)
@@ -31,7 +37,7 @@ def train():
 
     set_seed(RNG_SEED)
 
-    datasets, attr_counts = load_datasets(base_path=BASE_PATH)
+    datasets, attr_counts = load_datasets(base_path=BASE_PATH, num_labels=NUM_LABELS, segment=SEGMENT)
     num_labels = attr_counts.shape[0]
     weights = compute_imbalanced_class_weights(attr_counts, as_tensor=True)
     weights = weights.to(DEVICE)
@@ -45,7 +51,11 @@ def train():
                                         shuffle=False,
                                         pin_memory=True)
     
-    model = ResnetDummy(num_labels, freeze_pretrain=False)
+    if SEGMENT:
+        model = Unet(num_labels=num_labels, n_classes=1, pretrained_path=os.path.join(BASE_PATH, 'pretrained_unet.pt'))
+        seg_criterion = SoftDiceLoss()
+    else:
+        model = ResnetDummy(num_labels, freeze_pretrain=False)
     model = model.to(DEVICE)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -61,13 +71,23 @@ def train():
     for epoch in range(EPOCHS):
         model.train()
         with tqdm(train_dataloader) as pbar:
-            for imgs, attributes in pbar:
+            for imgs, attributes, segs, segLossMask in pbar:
                 imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
                 
+                if SEGMENT:
+                    segs.to(DEVICE).float()
+                    segLossMask.to(DEVICE)
+
                 model.zero_grad()
                 out = model(imgs)
 
-                loss = criterion(out, attributes)
+                if SEGMENT:
+                    classification_loss = criterion(out[0], attributes)
+                    seg_loss = seg_criterion(segLossMask.reshape(-1,1,1,1) * out[1], segs)
+                    loss = classification_loss + LAMBD * seg_loss
+                else:
+                    loss = criterion(out, attributes)
+
                 loss.backward()
 
                 optimizer.step()
@@ -79,16 +99,27 @@ def train():
 
         model.eval()
         all_probs = []
+        # all_dice_accs = []
+        # all_ious = []
         all_attributes = []
         with torch.no_grad():
             correct = 0.
             total = 0.
             with tqdm(eval_dataloader) as pbar:
-                for imgs, attributes in pbar:
+                for imgs, attributes, segs, segLossMask in pbar:
                     imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
+
+                    if SEGMENT:
+                        segs.to(DEVICE).float()
+                        segLossMask.to(DEVICE)
+
                     out = model(imgs)
 
-                    outputs = torch.sigmoid(out)
+                    if SEGMENT:
+                        outputs = torch.sigmoid(out[0])
+                        # dice_accs = dice_coefficient(segLossMask.reshape(-1,1,1,1) * out[1], segs)
+                    else:
+                        outputs = torch.sigmoid(out)
                     predictions = torch.round(outputs)
                     total += attributes.size(0) * attributes.size(1)
                     correct += (predictions == attributes).sum().cpu().item()
