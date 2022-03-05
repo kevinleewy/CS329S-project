@@ -96,7 +96,7 @@ def get_closest_embeds(img_embed, all_embeds, num_to_sample):
         if distance > 0: # To ensure not same image 
             distances.append((index, distance))
     
-    distances.sort(key=lambda x: x[1], reverse=True)
+    distances.sort(key=lambda x: x[1], reverse=False)
     out = []
     for index, _ in distances[:num_to_sample]:
         out.append(index)
