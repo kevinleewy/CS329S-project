@@ -149,12 +149,16 @@ def generate_plot_and_query_user(img_path, catalog_names, num_to_sample=5):
     
     total_models = len(model_metadata.keys()) + 1 # +1 for random
     plt.ion()
-    fig, ax = plt.subplots(nrows=total_models, ncols=num_to_sample, figsize=(25, 16))
+    fig, ax = plt.subplots(nrows=total_models, ncols=num_to_sample + 1, figsize=(25, 16))
     
-    
+    query_img = Image.open(img_path).convert('RGB')
+    ax[0, 0].imshow(query_img)
+    ax[0, 0].set_title(f'Query Image')
+    for i in range(total_models):
+        ax[i, 0].axis('off')
     for idx, (img, _) in enumerate(imgs_to_plot):
         row = idx // num_to_sample
-        col = idx % num_to_sample
+        col = (idx % num_to_sample) + 1
         ax[row, col].imshow(img)
         ax[row, col].set_title(f'Image {idx}')
         ax[row, col].axis('off')
