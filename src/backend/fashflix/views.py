@@ -31,7 +31,7 @@ from .data.database import FashionDatabase
 from .ml.dataloader import load_datasets, get_data_transforms
 from .ml.dummy import Identity, Rotate
 from .ml.model import ResnetDummy
-from .ml.recommender import KNearestRecommender
+from .ml.recommender import KNearestRecommender, NoopPreferenceOptimizer
 from .ml.utils import make_embedding_callback
 
 
@@ -40,6 +40,8 @@ class Config:
     WEIGHTS_PATH = os.path.join(settings.BASE_DIR, "fashflix/ml/2022-02-08_23-53-14/best_model.pt")
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     VOTES_DF_PATH = "votes.csv"
+
+    OPTIMIZER = NoopPreferenceOptimizer
 
 
 class ML:
@@ -50,17 +52,19 @@ class ML:
     def setup(cls):
         if cls.SETUP_DONE: return True
 
-        database = FashionDatabase()
-        print(f"Metadata Database: {database.metadata_database.read_df().count()}")
-        print(f"Embeddings Database: {database.embeddings_database.read_df().count()}")
+        cls.database = FashionDatabase()
+        print(f"Metadata Database: {cls.database.metadata_database.read_df().count()}")
+        print(f"Embeddings Database: {cls.database.embeddings_database.read_df().count()}")
 
         recommender = KNearestRecommender()
-        embeddings_df = database.embeddings_database.read_df()
+        embeddings_df = cls.database.embeddings_database.read_df()
         embeddings_pdf = embeddings_df.toPandas()
         embeddings_pdf["embeddings"] = embeddings_pdf.embeddings_json.apply(lambda embedding_json: np.array(json.loads(embedding_json), dtype="float"))
         embeddings_data = np.array(embeddings_pdf["embeddings"].values.tolist())
         cls.default_preference_vector = embeddings_data.mean(axis=0).reshape(1, -1)
         recommender.fit(embeddings_data)
+
+        cls.preference_optimizer = Config.OPTIMIZER()
 
         model = ResnetDummy(Config.NUM_LABELS, freeze_pretrain=False)
         model.load_state_dict(torch.load(Config.WEIGHTS_PATH, map_location=torch.device(Config.DEVICE)))
@@ -79,16 +83,19 @@ class ML:
             if preference_vector is None:
                 preference_vector = cls.default_preference_vector
 
+            preference_vector = np.array(preference_vector)
+            print("preference_vector shape:", preference_vector.shape)
             recommendation_uuids = recommender.get_recommendations(preference_vector, embeddings_pdf)
             recommendation_uuids = recommendation_uuids[0]
             votes_df = pd.DataFrame({"recommendation_uuid": recommendation_uuids})
             votes_df.to_csv(Config.VOTES_DF_PATH, index=False)
-            recommendations = database.get_images_and_metadata(recommendation_uuids)
-            return list(recommendations.values())
+            recommendations = cls.database.get_images_and_metadata(recommendation_uuids)
+            return [{**recc_details, "id": recc_id} for recc_id, recc_details in recommendations.items()]
 
         cls.model_callback = model_callback
         cls.SETUP_DONE = True
         return True
+
 
     @classmethod
     def get_recommendations_from_image(cls, image_url, user_id):
@@ -99,6 +106,7 @@ class ML:
         input_embedding = [input_embeddings[0]] # work on single image
         return cls.model_callback(input_embedding)
 
+
     @classmethod
     def get_user_vector(cls, user_id):
         if not cls.SETUP_DONE:
@@ -108,13 +116,15 @@ class ML:
             user = User.objects.get(pk=user_id)
             user_vector = json.loads(get_param(user, "preference_vector", "null"))
             if user_vector is None:
-                user.preference_vector = json.dumps(cls.default_preference_vector)
+                user.preference_vector = json.dumps(cls.default_preference_vector.tolist())
+                user_vector = json.loads(user.preference_vector)
                 user.save()
-            return user.preference_vector
+            return user_vector
         except Exception as e:
             print(f"Error in getting user vector for id {user_id}: {e}")
             pass
         return cls.default_preference_vector
+
 
     @classmethod
     def get_recommendations_for_user(cls, user_id):
@@ -124,6 +134,28 @@ class ML:
         if user_vector is None:
             raise Exception("No vector produced")
         return cls.model_callback(user_vector)
+
+
+    @classmethod
+    def optimize_preference_vector(cls, votes, image_ids, user_id):
+        if not cls.SETUP_DONE:
+            ML.setup()
+        user = User.objects.get(pk=user_id)
+        user_vector = cls.get_user_vector(user_id)
+        if user_vector is None:
+            raise Exception("User does not have an initialized preference vector")
+
+        image_embeddings = cls.database.get_embeddings(image_ids)
+        # print("image_embeddings", image_embeddings)
+        updated_vector = cls.preference_optimizer.optimize(
+            user_vector[0],
+            [image_embeddings[image_id] for image_id in image_ids],
+            votes,
+        )
+        if updated_vector is not None:
+            user.preference_vector = json.dumps([updated_vector])
+            user.save()
+        return updated_vector
 
 
 @api_view(["POST"])
@@ -148,6 +180,21 @@ def get_recommendations(request):
     recommendations = ML.get_recommendations_for_user(user_id)
     return Response(recommendations, status=status.HTTP_200_OK)
     # return Response("No input image url in request.", status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def ratings(request):
+    user_id = request.user.id or get_param(request, "userId")
+    image_ids = get_param(request, "imageIds")
+    votes = get_param(request, "votes")
+    # body_unicode = request.body.decode('utf-8')
+    # body_data = json.loads(body_unicode)
+    # print("request data:", body_data)
+    print(user_id, image_ids, votes)
+    if user_id is not None and image_ids is not None and votes is not None:
+        preference_vector = ML.optimize_preference_vector(votes, image_ids, user_id)
+        return Response("Updated preferences", status=status.HTTP_200_OK)
+    return Response("Incomplete parameters for request", status=status.HTTP_400_BAD_REQUEST)
 
 
 # ========================================================

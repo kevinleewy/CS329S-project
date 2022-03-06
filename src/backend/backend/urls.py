@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/setup", views.setup, name="setup"),
     # path('api/get_recommendations', views.ML.get_recommendations, name='get_recommendations'),
     path("api/get_recommendations", views.get_recommendations, name="get_recommendations"),
+    path("api/ratings", views.ratings, name="ratings"),
     # path('api/', include(router.urls)),
     path("api/login", views.login, name="login"),
     path("api/sign_up", views.sign_up, name="sign_up"),
