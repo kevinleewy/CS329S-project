@@ -20,9 +20,11 @@ ALL of the following must be directly in the BASE_PATH folder
 - img folder for gallery (the URIs)
 """
 
-
-BASE_PATH = '/scratch/users/avento/deepfashion'
+# DATA_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark/Img'
+# BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
+BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+NUM_TO_SAMPLE = 5
 
 model_metadata = {
     "model_13": {
@@ -78,11 +80,46 @@ def get_embed(model_name, full_img_path, transform=get_data_transforms()["test"]
     return embedding
 
 
+# class Catalog():
+
+#     def __len__(self) -> int:
+#         return len(self.catalog)
+
+#     def __get__(self, index):
+#         raise NotImplementedError
+
+# class IDCatalog(Catalog):
+#     def __init__(self, catalog_path: str, image_path: str):
+#         self.catalog_distribution = "in-distribution"
+#         self.image_path = image_path
+
+#         with open(catalog_path, "r") as f:
+#             self.catalog = json.load(f)
+
+#     def __get__(self, index) -> Image :
+#         img_uri = self.catalog[index]['URI']
+#         full_img_path = os.path.join(self.image_path, img_uri)
+#         img = Image.open(full_img_path)
+#         return img
+
+# class OODCatalog(Catalog):
+#     def __init__(self, catalog_path: str, image_path: str):
+#         self.catalog_distribution = "out-of-distribution"
+#         self.image_path = image_path
+
+#         with open(catalog_path, "r") as f:
+#             self.catalog = json.load(f)
+
+#     def __get__(self, index) -> Image :
+#         full_img_path = os.path.join(self.image_path, f"{index}.jpg")
+#         img = Image.open(full_img_path)
+#         return img
+
 def get_img_from_index(catalog_name, all_catalogs, index):
     if catalog_name == "gallery":
         catalog = all_catalogs[catalog_name]
         img_uri = catalog[index]['URI']
-        full_img_path = os.path.join(BASE_PATH, img_uri)
+        full_img_path = os.path.join(DATA_PATH, img_uri)
     else:
         img_dir = catalog_metadata[catalog_name]["img_dir"]
         full_img_path = os.path.join(img_dir, f"{index}.jpg")
@@ -98,8 +135,14 @@ def get_closest_embeds(img_embed, all_embeds, num_to_sample):
     
     distances.sort(key=lambda x: x[1], reverse=False)
     out = []
-    for index, _ in distances[:num_to_sample]:
-        out.append(index)
+    prev_dist = None
+    for index, dist in distances:
+        if dist != prev_dist:
+            prev_dist = dist
+            out.append(index)
+            print(index, dist, all_embeds[index])
+            if len(out) == num_to_sample:
+                break
     return out
 
 
@@ -168,6 +211,8 @@ def generate_plot_and_query_user(img_path, catalog_names, num_to_sample=5):
     plt.savefig(temp_save_path)
     print(f"Image has been saved at {temp_save_path}.  Go open it and get ready to review!")
     
+    plt.close()
+
     outputs = []
     catalog_distribution = "in-distribution" if "gallery" in catalog_names else "out-of-distribution"
     for idx, (_, model) in enumerate(imgs_to_plot):
@@ -175,19 +220,17 @@ def generate_plot_and_query_user(img_path, catalog_names, num_to_sample=5):
         while val not in ["y", "n"]:
             val = input(f"Do your like image{idx} (y or n): ")
         outputs.append((model, val, catalog_distribution))
-
-    plt.close()
     
     return outputs
 
 
 if __name__ == "__main__":
     # TODO: ADD MORE IMGS HERE :P 
-    query_img_paths = [os.path.join(BASE_PATH, "TestImg123.png")]
+    query_img_paths = [os.path.join(BASE_PATH, "New-Summer-Clothes-for-Women.jpeg")]
     out = []
     for img_path in query_img_paths:
-        out += generate_plot_and_query_user(img_path, in_distribution_catalogs, num_to_sample=5)
-        out += generate_plot_and_query_user(img_path, out_of_distribution_catalogs, num_to_sample=5)
+        out += generate_plot_and_query_user(img_path, in_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
+        out += generate_plot_and_query_user(img_path, out_of_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
     
     with open(os.path.join(BASE_PATH, "eval_results.pickle"), 'wb') as handle:
         pickle.dump(out, handle, protocol=pickle.HIGHEST_PROTOCOL)
