@@ -31,7 +31,7 @@ from .data.database import FashionDatabase
 from .ml.dataloader import load_datasets, get_data_transforms
 from .ml.dummy import Identity, Rotate
 from .ml.model import ResnetDummy
-from .ml.recommender import KNearestRecommender, NoopPreferenceOptimizer
+from .ml.recommender import KNearestRecommender, NoopPreferenceOptimizer, WeightedPreferenceOptimizer
 from .ml.utils import make_embedding_callback
 
 
@@ -41,7 +41,7 @@ class Config:
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     VOTES_DF_PATH = "votes.csv"
 
-    OPTIMIZER = NoopPreferenceOptimizer
+    OPTIMIZER = WeightedPreferenceOptimizer
 
 
 class ML:

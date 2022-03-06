@@ -45,3 +45,17 @@ class NoopPreferenceOptimizer:
 	def optimize(self, preference_vector, *args, **kwargs):
 		return preference_vector
 
+
+class WeightedPreferenceOptimizer:
+
+	def __init__(self, alpha=0.01):
+		self.alpha = alpha
+		self.one_min_alpha = 1. - alpha
+
+
+	def optimize(self, preference_vector, image_embeddings, votes):
+		preference_vector = np.array(preference_vector)
+		for vote, embedding in zip(votes, image_embeddings):
+			coeff = 1 if vote else -1
+			preference_vector = self.one_min_alpha * preference_vector + self.alpha * np.array(embedding)
+		return preference_vector.tolist()
