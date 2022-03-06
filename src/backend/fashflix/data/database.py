@@ -1,5 +1,6 @@
 # Standard Imports
 import os
+import json
 import random
 import sys
 from datetime import datetime
@@ -226,6 +227,14 @@ class FashionDatabase:
 			uuid_row = self.metadata_database.get_row(uuid)
 			img_uri = get_path_uri(str(Path(data_package_root) / uuid_row["uri"]))
 			outputs[uuid] = {"uri": img_uri, "price": uuid_row["price"], "rating": uuid_row["rating"]}
+		return outputs
+
+
+	def get_embeddings(self, uuids):
+		outputs = {}
+		for uuid in uuids:
+			uuid_row = self.embeddings_database.get_row(uuid)
+			outputs[uuid] = json.loads(uuid_row["embeddings_json"])
 		return outputs
 
 
