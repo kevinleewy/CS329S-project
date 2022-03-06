@@ -86,7 +86,7 @@ function UploadSection({imageUrl, setImageUrl}) {
           <FileUploader fileList={fileList} setFileList={setFileList} setImageUrl={setImageUrl} />
         </Col>
         <Col span={12}>
-          {imageUrl && (<img src={imageUrl} alt="avatar" style={{ width: '100%' }} />)}
+          {imageUrl && (<img src={imageUrl} alt="avatar" style={{ display: "block", height: props.height, maxWidth: "100%" }} />)}
         </Col>
       </Row>
       <br />
