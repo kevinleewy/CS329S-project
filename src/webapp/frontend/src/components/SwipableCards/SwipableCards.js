@@ -51,18 +51,26 @@ const CardImage = styled.img`
   pointer-events: none;
 `
 
-export const SwipableCards = ({img_uris}) => {
+export const SwipableCards = ({imgUris, onSubmitRatings}) => {
   // Streamlit.setFrameHeight(500)
 
   // const renderData = useRenderData()
 
-  const [imgs, setImgs] = useState(img_uris || [])
+  const [imgs, setImgs] = useState(imgUris || [])
   const [isFocused, setIsFocused] = useState(false)
+  const [votes, setVotes] = useState([])
 
   const onVote = (item, vote) => {
-    console.log(item.props, vote);
+    // console.log(item.props, vote);
     // Streamlit.setComponentValue(vote);
+    setVotes([...votes, vote])
   }
+
+  useEffect(() => {
+    if (votes.length === imgs.length) {
+      onSubmitRatings(votes);
+    }
+  }, [votes, imgs]);
 
   // console.log("props:", props)
   // const imgs = props.imgs || [] //renderData.args["imgs"]

@@ -12,7 +12,7 @@ import HeaderSteps from '../../components/Steps/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 import UploadSection from '../../components/UploadSection/UploadSection';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { GET_RECOMMENDATIONS } from '../../apiPaths';
+import { GET_RECOMMENDATIONS, RATINGS } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -70,81 +70,52 @@ function SearchPage({userId}) {
   // const carouselRef = useRef();
   // var carouselRef2 = null;
 
-  const changeCurrent = (newCurrent) => {
-    // carouselRef.current.goTo(newCurrent);
-    setCurrent(newCurrent);
-  }
+  // useEffect(() => {
+  //   if (!!userId) {
+  //     axios.post(GET_RECOMMENDATIONS, {userId})
+  //     .then(function (response) {
+  //       console.log(response);
+  //       setSearchResults([...response.data]);
+  //       return response.data
+  //     })
+  //     .catch(function (error) {
+  //       console.log(error);
+  //     });
+  //   }
+  // }, [userId]);
 
+  
+  const [votes, setVotes] = useState(null);
+  const onSubmitRatings = (votes) => {setVotes(votes)};
+  const flippedSearchResults = [...searchResults].reverse();
+  const imgUris = flippedSearchResults.map(item => item.uri);
   useEffect(() => {
-    if (current === 1) {
-      axios.post(GET_RECOMMENDATIONS, {imageUrl, userId})
+    if (!!votes && imgUris.length === votes.length) {
+
+      axios.post(RATINGS, {userId, votes, imageIds: flippedSearchResults.map(item => item.id)})
       .then(function (response) {
         console.log(response);
-        setSearchResults([...response.data]);
-        setTimeout(() => {
-          changeCurrent(2);
-        }, 3000);
         return response.data
       })
       .catch(function (error) {
         console.log(error);
-        changeCurrent(0);
       });
     }
-  }, [current, userId]);
+  }, [votes])
 
-  const steps = [
-    {
-      title: 'Upload Image',
-      icon: (<FileImageOutlined />),
-      // content: (
-      //   <UploadSection imageUrl={imageUrl} setImageUrl={setImageUrl} />
-      // ),
-      next_button: "Run Model",
-      // next_addition: 1,
-      next_on_click: (() => {changeCurrent(1)}),
-    },
-    {
-      title: 'Run Model',
-      icon: (<ExperimentOutlined />),
-      // content: (
-      //   <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
-      //     <StyledSwipableCards />
-      //   </div>
-      // ),
-      // next_button: "DEBUG next",
-      // next_addition: 1,
-      // next_on_click: (() => {changeCurrent(2)}),
-    },
-    {
-      title: 'Explore Fits',
-      icon: (<SkinOutlined />),
-      // content: (
-      //   <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
-      //     <StyledSwipableCards imgs={searchResults} />
-      //   </div>
-      // ),
-      next_button: "Rate Recommendations",
-      prev_button: "Back to Upload",
-      // next_addition: 1,
-      // prev_addition: -2,
-      next_on_click: (() => {changeCurrent(3)}),
-      prev_on_click: (() => {changeCurrent(0)}),
-    },
-    {
-      title: 'Rate Fits',
-      icon: (<FireOutlined />),
-      // content: (
-      //   <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
-      //     <StyledSwipableCards imgs={searchResults} />
-      //   </div>
-      // ),
-      prev_button: "Back to Upload",
-      // next_addition: 1,
-      // prev_addition: -3,
-      prev_on_click: (() => {changeCurrent(0)}),
-    },
-  ];
+  useEffect(() => {
+    if (!!userId) {
+      axios.post(GET_RECOMMENDATIONS, {userId})
+      .then(function (response) {
+        console.log(response);
+        setSearchResults([...response.data]);
+        return response.data
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  }, [userId]);
 
   return (
     <>
@@ -158,11 +129,21 @@ function SearchPage({userId}) {
       </Breadcrumb>
       <Title style={{marginBottom: "12px"}}>Personalize your Recommendations</Title>
       
-      <div>
-        <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
-          <StyledSwipableCards img_uris={searchResults.reverse().map(item => item.uri)} />
+      {(searchResults.length > 0) && (
+        <div>
+          <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
+            <StyledSwipableCards imgUris={searchResults.reverse().map(item => item.uri)} onSubmitRatings={onSubmitRatings} />
+          </div>
         </div>
-      </div>
+      )}
+      {(searchResults.length === 0) && (
+        <>
+          <br />
+          <br />
+          <br />
+          <img src="https://alahausse.ca/wp-content/uploads/2021/08/giphy-phone.gif" />
+        </>
+      )}
     </>
   )
 }

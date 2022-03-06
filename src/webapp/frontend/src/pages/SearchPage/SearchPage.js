@@ -12,7 +12,7 @@ import HeaderSteps from '../../components/Steps/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 import UploadSection from '../../components/UploadSection/UploadSection';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { GET_RECOMMENDATIONS } from '../../apiPaths';
+import { GET_RECOMMENDATIONS, RATINGS } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -146,6 +146,38 @@ function SearchPage({userId}) {
     },
   ];
 
+  const [votes, setVotes] = useState(null);
+  const onSubmitRatings = (votes) => {setVotes(votes)};
+  const flippedSearchResults = [...searchResults].reverse();
+  const imgUris = flippedSearchResults.map(item => item.uri);
+  useEffect(() => {
+    if (!!votes && imgUris.length === votes.length) {
+
+      axios.post(RATINGS, {userId, votes, imageIds: flippedSearchResults.map(item => item.id)})
+      .then(function (response) {
+        console.log(response);
+        return response.data
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  }, [votes])
+
+  useEffect(() => {
+    if (!!userId) {
+      axios.post(GET_RECOMMENDATIONS, {userId})
+      .then(function (response) {
+        console.log(response);
+        setSearchResults([...response.data]);
+        return response.data
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  }, [userId]);
+
   return (
     <>
       <Breadcrumb style={{ margin: '16px 0 0', textAlign: 'left' }}>
@@ -188,7 +220,11 @@ function SearchPage({userId}) {
       {current === 3 && (
         <div style={{display: (current === 3) ? 'block' : 'none' }} key={"slide4-${searchResults.length}imgs"}>
           <div className="site-layout-background" style={{ padding: '24px 0', minHeight: 360 }}>
-            <StyledSwipableCards key={"slide4-swipableCards-${searchResults.length}imgs"} img_uris={searchResults.reverse().map(item => item.uri)} />
+            <StyledSwipableCards
+              key={"slide4-swipableCards-${searchResults.length}imgs"}
+              imgUris={imgUris}
+              onSubmitRatings={onSubmitRatings}
+            />
           </div>
         </div>
       )}
