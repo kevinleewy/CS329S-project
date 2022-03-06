@@ -31,7 +31,7 @@ import HeaderSteps from '../../components/Steps/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 import UploadSection from '../../components/UploadSection/UploadSection';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { GET_RECOMMENDATIONS } from '../../apiPaths';
+import { OBTAIN_AUTH_TOKEN, GET_RECOMMENDATIONS } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -202,7 +202,7 @@ function FilterMenu(min, max, onSubmit) {
 };
 
 
-function SearchPage() {
+function CatalogPage() {
   const [collapsed, setCollapsed] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -210,7 +210,7 @@ function SearchPage() {
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
-    axios.post(GET_RECOMMENDATIONS)
+    axios.post(GET_RECOMMENDATIONS, {})
     .then(function (response) {
       console.log(response);
       setSearchResults([...response.data]);
@@ -221,17 +221,24 @@ function SearchPage() {
     });
   }, []);
 
+  useEffect(() => {}, [searchResults, filters]);
+
   const onSubmit = (filters) => {
-    console.log(filters)
+    setFilters(filters);
   };
 
   const matchesFilters = (item) => {
-    return (
-      (filters.rating && item.rating && item.rating >= filters.rating) &&
-      (filters.minPrice && item.rating && item.price >= filters.minPrice) &&
-      (filters.maxPrice && item.rating && item.price <= filters.maxPrice)
-    )
+    const item_price = parseFloat(item.price.slice(1));
+    const item_matches = (
+      (!filters.rating || (item.rating && (item.rating >= filters.rating))) &&
+      (!filters.minPrice || (item.rating && (item_price >= filters.minPrice))) &&
+      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice)))
+    );
+    return item_matches;
   }
+
+  const matchingItems = searchResults.filter(matchesFilters);
+  console.log(matchingItems);
 
   return (
     <>
@@ -242,10 +249,10 @@ function SearchPage() {
               <HomeOutlined />
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-              Search
+              Catalog
             </Breadcrumb.Item>
           </Breadcrumb>
-          <Title style={{marginBottom: "12px"}}>Search for Outfits</Title>
+          <Title style={{marginBottom: "12px"}}>Product Catalog</Title>
         </Col>
         <Col span={2}>
           <Dropdown.Button
@@ -264,14 +271,21 @@ function SearchPage() {
       
       <div key={"slide3-${searchResults.length}imgs"} className="steps-content">
         <br />
-        <Row gutter={[16, 16]}>
-          {searchResults.map(item => {matchesFilters(item) && (
-            <Col span={4}>
-              <ProductCard {...item} />
-            </Col>
-          )})}
-        </Row>
-        {searchResults.length === 0 && (
+        {(matchingItems.length === 0) && (searchResults.length !== 0) && (
+          <div style={{textAlign: "left"}}>
+            No results found for these filters! Try expanding the parameters.
+          </div>
+        )}
+        {(matchingItems.length > 0) && (
+          <Row gutter={[16, 16]}>
+            {matchingItems.map((item, idx) => (
+              <Col span={4}>
+                <ProductCard key="catalog-col-product${idx}" {...item} />
+              </Col>
+            ))}
+          </Row>
+        )}
+        {(searchResults.length === 0) && (
           <>
             <br />
             <br />
@@ -285,4 +299,4 @@ function SearchPage() {
   )
 }
 
-export default SearchPage;
+export default CatalogPage;

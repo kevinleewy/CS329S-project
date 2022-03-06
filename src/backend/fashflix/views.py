@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 # from lazysignup.decorators import allow_lazy_user
 
 # from .serializers import OutputImageSerializer
-# from .models import OutputImage
+from .models import User
 
 import json
 import os
@@ -44,6 +44,7 @@ class Config:
 
 class ML:
     SETUP_DONE = False
+    preference_vector = None
 
     @classmethod
     def setup(cls):
@@ -74,6 +75,12 @@ class ML:
         embedding_callback = make_embedding_callback(get_img_embedding)
 
         def model_callback(preference_vector):
+            if cls.preference_vector is None:
+                if preference_vector is None:
+                    cls.preference_vector = embeddings_data.mean(axis=0).reshape(1, -1)
+                else:
+                    cls.preference_vector = preference_vector
+
             recommendation_uuids = recommender.get_recommendations(preference_vector, embeddings_pdf)
             recommendation_uuids = recommendation_uuids[0]
             votes_df = pd.DataFrame({"recommendation_uuid": recommendation_uuids})
@@ -98,7 +105,7 @@ class ML:
     def get_user_vector(cls, user_id):
         if not cls.SETUP_DONE:
             ML.setup()
-        return []
+        return cls.preference_vector
 
     @classmethod
     def get_recommendations_for_user(cls, user_id):
@@ -123,6 +130,8 @@ def get_recommendations(request):
 
     user = request.user
     print("user:", request.user.id, request.user.username)
+    recommendations = ML.get_recommendations_for_user(user.id)
+    return Response(recommendations, status=status.HTTP_200_OK)
     return Response("No input image url in request.", status=status.HTTP_400_BAD_REQUEST)
 
 

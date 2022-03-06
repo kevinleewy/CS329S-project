@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from "axios";
 
 import { Layout, Menu, Breadcrumb } from 'antd';
 import Icon, {
@@ -23,6 +24,8 @@ import SwipableCards from '../../components/SwipableCards/SwipableCards';
 import CatalogPage from '../CatalogPage/CatalogPage';
 import SearchPage from '../SearchPage/SearchPage';
 import PersonalizationPage from '../PersonalizationPage/PersonalizationPage';
+
+import { OBTAIN_AUTH_TOKEN, AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -58,12 +61,12 @@ function LogoIcon() {
   )
 }
 
+const ACCEPTED_STATUS_CODE = 200;
 
 function LandingPage() {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedPage, setSelectedPage] = useState("catalog");
-
-  useEffect(() => {}, [selectedPage]);
+  const [userId, setUserId] = useState(null);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
