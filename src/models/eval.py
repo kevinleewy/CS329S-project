@@ -22,7 +22,8 @@ ALL of the following must be directly in the BASE_PATH folder
 
 # DATA_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark/Img'
 # BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
-BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
+BASE_PATH = '/scratch/users/avento/deepfashion'
+DATA_PATH = BASE_PATH
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 NUM_TO_SAMPLE = 5
 
