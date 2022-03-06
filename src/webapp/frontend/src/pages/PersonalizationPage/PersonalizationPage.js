@@ -128,6 +128,7 @@ function SearchPage({userId}) {
         </Breadcrumb.Item>
       </Breadcrumb>
       <Title style={{marginBottom: "12px"}}>Personalize your Recommendations</Title>
+      <br />
       
       {(searchResults.length > 0) && (
         <div>
