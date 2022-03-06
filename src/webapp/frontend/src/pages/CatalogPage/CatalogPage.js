@@ -202,7 +202,7 @@ function FilterMenu(min, max, onSubmit) {
 };
 
 
-function CatalogPage() {
+function CatalogPage({userId}) {
   const [collapsed, setCollapsed] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -210,16 +210,18 @@ function CatalogPage() {
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
-    axios.post(GET_RECOMMENDATIONS, {})
-    .then(function (response) {
-      console.log(response);
-      setSearchResults([...response.data]);
-      return response.data
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-  }, []);
+    if (!!userId) {
+      axios.post(GET_RECOMMENDATIONS, {userId})
+      .then(function (response) {
+        console.log(response);
+        setSearchResults([...response.data]);
+        return response.data
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  }, [userId]);
 
   useEffect(() => {}, [searchResults, filters]);
 

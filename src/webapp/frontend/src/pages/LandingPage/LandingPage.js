@@ -68,6 +68,56 @@ function LandingPage() {
   const [selectedPage, setSelectedPage] = useState("catalog");
   const [userId, setUserId] = useState(null);
 
+  useEffect(() => {}, [selectedPage]);
+  
+  useEffect(() => {
+    const createGuestAccountOrUseToken = async () => {
+      if (!userId) {
+        const token = localStorage?.token;
+        const username = localStorage?.username;
+        if (!!token && !!username) {
+          let config = {
+            headers: {
+              Authorization: "Token " + token,
+            },
+          };
+
+          try {
+            const token_response = await axios.post(
+              AUTHENTICATE_TOKEN,
+              { username },
+              config
+            );
+            if (token_response.status === ACCEPTED_STATUS_CODE) {
+              const loggedInUserId = token_response?.data?.userId;
+              if (!!loggedInUserId) {
+                setUserId(loggedInUserId);
+              }
+              return;
+            } else {
+              localStorage.removeItem("username");
+              localStorage.removeItem("token");
+            }
+          } catch (error) {
+            localStorage.removeItem("username");
+            localStorage.removeItem("token");
+          }
+        }
+
+        const result = await axios(GUEST_ACCOUNT);
+        console.log(result);
+        if (result.data && result.data.validated && result.data.id) {
+          setUserId(result.data.id);
+        }
+      }
+    };
+
+    createGuestAccountOrUseToken();
+  }, [userId]);
+
+  console.log("userId:", userId);
+
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={(c) => {setCollapsed(c)}}>
@@ -104,9 +154,9 @@ function LandingPage() {
       </Sider>
       <Layout className="site-layout">
         <Content style={{ margin: '16px 32px' }}>
-          {(selectedPage === "catalog") && <CatalogPage />}
-          {(selectedPage === "search") && <SearchPage />}
-          {(selectedPage === "personalize") && <PersonalizationPage />}
+          {(selectedPage === "catalog") && <CatalogPage userId={userId} />}
+          {(selectedPage === "search") && <SearchPage userId={userId} />}
+          {(selectedPage === "personalize") && <PersonalizationPage userId={userId} />}
         </Content>
         {false && (<Footer style={{ textAlign: 'center' }}>Ant Design ©2018 Created by Ant UED</Footer>)}
       </Layout>

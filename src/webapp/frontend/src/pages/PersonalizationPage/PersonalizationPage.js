@@ -60,7 +60,7 @@ function beforeUpload(file) {
 }
 
 
-function SearchPage() {
+function SearchPage({userId}) {
   const [collapsed, setCollapsed] = useState(false);
   const [current, setCurrent] = useState(0);
   const [imageUrl, setImageUrl] = useState(null);
@@ -77,7 +77,7 @@ function SearchPage() {
 
   useEffect(() => {
     if (current === 1) {
-      axios.post(GET_RECOMMENDATIONS, {imageUrl})
+      axios.post(GET_RECOMMENDATIONS, {imageUrl, userId})
       .then(function (response) {
         console.log(response);
         setSearchResults([...response.data]);
@@ -91,7 +91,7 @@ function SearchPage() {
         changeCurrent(0);
       });
     }
-  }, [current]);
+  }, [current, userId]);
 
   const steps = [
     {

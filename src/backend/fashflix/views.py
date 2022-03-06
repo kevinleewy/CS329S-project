@@ -59,6 +59,7 @@ class ML:
         embeddings_pdf = embeddings_df.toPandas()
         embeddings_pdf["embeddings"] = embeddings_pdf.embeddings_json.apply(lambda embedding_json: np.array(json.loads(embedding_json), dtype="float"))
         embeddings_data = np.array(embeddings_pdf["embeddings"].values.tolist())
+        cls.default_preference_vector = embeddings_data.mean(axis=0).reshape(1, -1)
         recommender.fit(embeddings_data)
 
         model = ResnetDummy(Config.NUM_LABELS, freeze_pretrain=False)
@@ -72,14 +73,11 @@ class ML:
             embedding = model.embed(img).cpu().detach().numpy().flatten()
             return embedding
 
-        embedding_callback = make_embedding_callback(get_img_embedding)
+        cls.embedding_callback = make_embedding_callback(get_img_embedding)
 
         def model_callback(preference_vector):
-            if cls.preference_vector is None:
-                if preference_vector is None:
-                    cls.preference_vector = embeddings_data.mean(axis=0).reshape(1, -1)
-                else:
-                    cls.preference_vector = preference_vector
+            if preference_vector is None:
+                preference_vector = cls.default_preference_vector
 
             recommendation_uuids = recommender.get_recommendations(preference_vector, embeddings_pdf)
             recommendation_uuids = recommendation_uuids[0]
@@ -93,11 +91,11 @@ class ML:
         return True
 
     @classmethod
-    def get_recommendations_from_image(cls, image_url):
+    def get_recommendations_from_image(cls, image_url, user_id):
         if not cls.SETUP_DONE:
             ML.setup()
         input_image = InputImage(image_url, "input_image")
-        input_embeddings = embedding_callback([input_image])
+        input_embeddings = cls.embedding_callback([input_image])
         input_embedding = [input_embeddings[0]] # work on single image
         return cls.model_callback(input_embedding)
 
@@ -105,13 +103,26 @@ class ML:
     def get_user_vector(cls, user_id):
         if not cls.SETUP_DONE:
             ML.setup()
-        return cls.preference_vector
+        try:
+            # print("Searching for", user_id)
+            user = User.objects.get(pk=user_id)
+            user_vector = json.loads(get_param(user, "preference_vector", "null"))
+            if user_vector is None:
+                user.preference_vector = json.dumps(cls.default_preference_vector)
+                user.save()
+            return user.preference_vector
+        except Exception as e:
+            print(f"Error in getting user vector for id {user_id}: {e}")
+            pass
+        return cls.default_preference_vector
 
     @classmethod
     def get_recommendations_for_user(cls, user_id):
         if not cls.SETUP_DONE:
             ML.setup()
         user_vector = cls.get_user_vector(user_id)
+        if user_vector is None:
+            raise Exception("No vector produced")
         return cls.model_callback(user_vector)
 
 
@@ -123,16 +134,20 @@ def setup(request):
 
 @api_view(["POST"])
 def get_recommendations(request):
+    user = request.user
+    # print("user:", user.id, user.username)
+    # body_unicode = request.body.decode('utf-8')
+    # body_data = json.loads(body_unicode)
+    # print("request data:", body_data)
+    user_id = user.id or get_param(request, "userId")
     image_url = get_param(request, "imageUrl")
     if image_url:
-        recommendations = ML.get_recommendations_from_image(image_url)
+        recommendations = ML.get_recommendations_from_image(image_url, user_id)
         return Response(recommendations, status=status.HTTP_200_OK)
 
-    user = request.user
-    print("user:", request.user.id, request.user.username)
-    recommendations = ML.get_recommendations_for_user(user.id)
+    recommendations = ML.get_recommendations_for_user(user_id)
     return Response(recommendations, status=status.HTTP_200_OK)
-    return Response("No input image url in request.", status=status.HTTP_400_BAD_REQUEST)
+    # return Response("No input image url in request.", status=status.HTTP_400_BAD_REQUEST)
 
 
 # ========================================================

@@ -28,6 +28,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     num_projects = models.IntegerField(default=0)
     is_guest_account = models.BooleanField(default=False, null=True, blank=True)
+    preference_vector = models.TextField(default="null", null=True, blank=True)
 
     def is_guest(self):
         return self.is_guest_account
