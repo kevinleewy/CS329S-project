@@ -24,6 +24,8 @@ ALL of the following must be directly in the BASE_PATH folder
 # BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
 BASE_PATH = '/scratch/users/avento/deepfashion'
 DATA_PATH = BASE_PATH
+CATALOGS_PATH = os.path.join(BASE_PATH, 'catalogs')
+QUERY_PATH = os.path.join(BASE_PATH, 'queries')
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 NUM_TO_SAMPLE = 5
 
@@ -44,19 +46,19 @@ model_metadata = {
 
 catalog_metadata = {
     "gallery": {
-        "catalog_dir": os.path.join(BASE_PATH, 'catalog.json'),
+        "catalog_dir": os.path.join(CATALOGS_PATH, 'catalog.json'),
     },
     "gap": {
         "img_dir":  os.path.join(BASE_PATH, "webscraped_images", "gap"),
-        "catalog_dir": os.path.join(BASE_PATH, "catalog_gap.json")
+        "catalog_dir": os.path.join(CATALOGS_PATH, "catalog_gap.json")
     },
     "express": {
         "img_dir":  os.path.join(BASE_PATH, "webscraped_images", "express"),
-        "catalog_dir": os.path.join(BASE_PATH, "catalog_express.json")
+        "catalog_dir": os.path.join(CATALOGS_PATH, "catalog_express.json")
     },
     "zappos": {
         "img_dir":  os.path.join(BASE_PATH, "webscraped_images", "zappos"),
-        "catalog_dir": os.path.join(BASE_PATH, "catalog_zappos.json")
+        "catalog_dir": os.path.join(CATALOGS_PATH, "catalog_zappos.json")
         
     }
 }
@@ -127,21 +129,20 @@ def get_img_from_index(catalog_name, all_catalogs, index):
     img = Image.open(full_img_path)
     return img
 
-def get_closest_embeds(img_embed, all_embeds, num_to_sample):
+def get_closest_embeds(img_embed, all_embeds, num_to_sample, epsilon=1e-8):
     distances = []
     for index, embed in enumerate(all_embeds):
         distance = np.sum((embed - img_embed) ** 2)
-        if distance > 0: # To ensure not same image 
+        if distance > epsilon: # To ensure not same image as query
             distances.append((index, distance))
     
     distances.sort(key=lambda x: x[1], reverse=False)
     out = []
     prev_dist = None
     for index, dist in distances:
-        if dist != prev_dist:
+        if dist != prev_dist: # To ensure no catalog dupes
             prev_dist = dist
             out.append(index)
-            print(index, dist, all_embeds[index])
             if len(out) == num_to_sample:
                 break
     return out
@@ -226,12 +227,17 @@ def generate_plot_and_query_user(img_path, catalog_names, num_to_sample=5):
 
 
 if __name__ == "__main__":
-    # TODO: ADD MORE IMGS HERE :P 
-    query_img_paths = [os.path.join(BASE_PATH, "New-Summer-Clothes-for-Women.jpeg")]
+
     out = []
-    for img_path in query_img_paths:
-        out += generate_plot_and_query_user(img_path, in_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
-        out += generate_plot_and_query_user(img_path, out_of_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
+
+    query_imgs = [img_path for img_path in os.listdir(QUERY_PATH) if not img_path.startswith('.')]
+
+    for i, img_path in enumerate(query_imgs):
+        print(f'Query image {i+1}/{len(query_imgs)}: {img_path}')
+        query_img_path = os.path.join(QUERY_PATH, img_path)
+
+        out += generate_plot_and_query_user(query_img_path, in_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
+        out += generate_plot_and_query_user(query_img_path, out_of_distribution_catalogs, num_to_sample=NUM_TO_SAMPLE)
     
     with open(os.path.join(BASE_PATH, "eval_results.pickle"), 'wb') as handle:
         pickle.dump(out, handle, protocol=pickle.HIGHEST_PROTOCOL)
