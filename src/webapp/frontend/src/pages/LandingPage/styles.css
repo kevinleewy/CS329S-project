@@ -1,58 +1,69 @@
-/*#components-layout-demo-top-side-2 .logo {
-  float: left;
-  width: 120px;
-  height: 31px;
-  margin: 16px 24px 16px 0;
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
-  font-size: 24px;
-}
-*/
-#components-layout-demo-side .logo {
-  height: 32px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.3);
+body,html {
+	margin:0;
+	padding:0;
+	height:100vh;
+	width:100vw;
+	position: absolute;
+	background: black;
 }
 
-.logo {
-  font-size: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+body {
+  background: white; /*#f1f1f1;*/
+  background-size: cover;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
 }
 
-.visible {
-  visibility: visible;
-  opacity: 1;
-  transition: opacity 2s linear;
-}
-.hidden {
-  visibility: hidden;
-  opacity: 0;
-  transition: visibility 0s 2s, opacity 2s linear;
+.bottom-left {
+	position: absolute;
+	left: 5%;
+	bottom: 30%;
+	/*transform: translate(-12%, 18%);*/
 }
 
-.slow-visible {
-  animation: 0.5s fadeIn;
-  animation-fill-mode: forwards;
+.top-right {
+	position: absolute;
+	top: 50%;
+	right: 5%;
+	/*transform: translate(10%, -10%);*/
+	/*transform: translate(12%, -18%);*/
+	background: url("https://cdn.dribbble.com/users/1712260/screenshots/5841993/scene_montage_2.gif");
+	background-size: cover;
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    visibility: visible;
-    opacity: 1;
-  }
+.center {
+	position: absolute
 }
 
-/*.ant-row-rtl #components-layout-demo-top-side-2 .logo {
-  float: right;
-  margin: 16px 0 16px 24px;
+.title {
+	position: absolute;
+	top: 16%;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 100px;
+	font-weight: bold;
 }
-*/
-.site-layout-background {
-  /*background: #fff;*/
+
+.bottom {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+svg {
+	font-weight:bold;
+	max-width:600px;
+	height:100%;
+}
+
+.inner {
+	position: absolute;
+}
+
+.rotated {
+  transform: rotate(10deg); /* Equal to rotateZ(45deg) */
+  background-color: pink;
 }
