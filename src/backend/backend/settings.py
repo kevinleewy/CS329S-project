@@ -23,7 +23,7 @@ print("CATALOG_DIR:", CATALOG_DIR)
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_KEY = os.environ["FASHFLIX_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -95,7 +95,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = "fashflix.User" 
+AUTH_USER_MODEL = 'fashflix.User'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
