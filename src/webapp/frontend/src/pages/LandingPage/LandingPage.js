@@ -45,6 +45,19 @@ const StyledSpan = styled.span`
   }
 `;
 
+const Container = styled.div`
+  & {
+    height: 100vh;
+    width: 100vw;
+    background: white; /*#f1f1f1;*/
+    background-size: cover;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+`
+
 const StyledSwipableCards = styled(SwipableCards)`
   background: red; // #f9fafb;
   // width: 300px;
@@ -73,7 +86,7 @@ const ACCEPTED_STATUS_CODE = 200;
 
 function LandingPage() {
   return (
-    <div className="inner" style={{height: "100vh", width: "100vw", transform: "translate(-50%)"}}>
+    <Container className="inner">
       <div className="title" style={{zIndex: 100}}>
         🧥 FashFlix
         <div style={{fontSize: "30px", marginTop: "-20px"}}>Less Scrolling • More Possibilities • Better Outfits</div>
@@ -98,7 +111,7 @@ function LandingPage() {
         style={{width:"90%"}}
         src="https://static.vecteezy.com/system/resources/previews/004/113/684/original/shopping-concept-for-web-banner-woman-buys-online-shopper-makes-purchases-and-receives-online-orders-at-store-modern-people-scene-illustration-in-flat-cartoon-design-with-person-characters-vector.jpg"
       />
-    </div>
+    </Container>
   )
 }
 

@@ -2,12 +2,14 @@ import logo from './logo.svg';
 import './App.css';
 
 // import HeaderSteps from './components/Steps/Steps';
-import LandingPage from './pages/LandingPage/LandingPage';
+import HomePage from './pages/HomePage/HomePage';
 
 function App() {
+  
+
   return (
     <div className="App">
-      <LandingPage />
+      <HomePage />)
     </div>
   );
 }

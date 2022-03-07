@@ -21,11 +21,12 @@ import './styles.css';
 import HeaderSteps from '../../components/Steps2/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 
+import LandingPage from '../LandingPage/LandingPage';
 import CatalogPage from '../CatalogPage/CatalogPage';
 import SearchPage from '../SearchPage/SearchPage';
 import PersonalizationPage from '../PersonalizationPage/PersonalizationPage';
 
-import { OBTAIN_AUTH_TOKEN, AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT } from '../../apiPaths';
+import { OBTAIN_AUTH_TOKEN, AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT, SETUP } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -66,7 +67,22 @@ const ACCEPTED_STATUS_CODE = 200;
 function HomePage() {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedPage, setSelectedPage] = useState("catalog");
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState(localStorage?.userId);
+  const [setupDone, setSetupDone] = useState(false);
+
+  useEffect(() => {
+    if (!setupDone) {
+      axios.post(SETUP, {})
+      .then(function (response) {
+        console.log(response);
+        setTimeout(() => setSetupDone(true), 5000);
+        return response.data
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+  }, []);
 
   useEffect(() => {}, [selectedPage]);
   
@@ -107,6 +123,7 @@ function HomePage() {
         const result = await axios(GUEST_ACCOUNT);
         console.log(result);
         if (result.data && result.data.validated && result.data.id) {
+          localStorage.setItem("userId", result.data.id)
           setUserId(result.data.id);
         }
       }
@@ -118,7 +135,7 @@ function HomePage() {
   console.log("userId:", userId);
 
 
-  return (
+  return !setupDone ? (<LandingPage />) : (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={(c) => {setCollapsed(c)}}>
         {collapsed ? (
