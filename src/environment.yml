@@ -9,6 +9,10 @@ dependencies:
   - torchvision
   - tqdm
   - pip:
+    - django
+    - django-lazysignup
+    - django-cors-headers
+    - djangorestframework
     - findspark
     - numpy
     - pandas

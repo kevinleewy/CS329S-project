@@ -1,0 +1,59 @@
+body,html {
+	margin:0;
+	padding:0;
+	height:100vh;
+	width:100vw;
+	position: absolute;
+}
+
+.bottom-left {
+	position: absolute;
+	left: 5%;
+	bottom: 30%;
+	/*transform: translate(-12%, 18%);*/
+}
+
+.top-right {
+	position: absolute;
+	top: 50%;
+	right: 5%;
+	/*transform: translate(10%, -10%);*/
+	/*transform: translate(12%, -18%);*/
+	background: url("https://cdn.dribbble.com/users/1712260/screenshots/5841993/scene_montage_2.gif");
+	background-size: cover;
+}
+
+.center {
+	position: absolute
+}
+
+.title {
+	position: absolute;
+	top: 16%;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 100px;
+	font-weight: bold;
+}
+
+.bottom {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+svg {
+	font-weight:bold;
+	max-width:600px;
+	height:100%;
+}
+
+.inner {
+	position: absolute;
+}
+
+.rotated {
+  transform: rotate(10deg); /* Equal to rotateZ(45deg) */
+  background-color: pink;
+}
