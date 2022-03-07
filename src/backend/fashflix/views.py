@@ -112,7 +112,6 @@ class ML:
         if not cls.SETUP_DONE:
             ML.setup()
         try:
-            # print("Searching for", user_id)
             user = User.objects.get(pk=user_id)
             user_vector = json.loads(get_param(user, "preference_vector", "null"))
             if user_vector is None:
@@ -167,7 +166,6 @@ def setup(request):
 @api_view(["POST"])
 def get_recommendations(request):
     user = request.user
-    # print("user:", user.id, user.username)
     # body_unicode = request.body.decode('utf-8')
     # body_data = json.loads(body_unicode)
     # print("request data:", body_data)
@@ -179,7 +177,6 @@ def get_recommendations(request):
 
     recommendations = ML.get_recommendations_for_user(user_id)
     return Response(recommendations, status=status.HTTP_200_OK)
-    # return Response("No input image url in request.", status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -187,10 +184,6 @@ def ratings(request):
     user_id = request.user.id or get_param(request, "userId")
     image_ids = get_param(request, "imageIds")
     votes = get_param(request, "votes")
-    # body_unicode = request.body.decode('utf-8')
-    # body_data = json.loads(body_unicode)
-    # print("request data:", body_data)
-    print(user_id, image_ids, votes)
     if user_id is not None and image_ids is not None and votes is not None:
         preference_vector = ML.optimize_preference_vector(votes, image_ids, user_id)
         return Response("Updated preferences", status=status.HTTP_200_OK)
@@ -200,67 +193,6 @@ def ratings(request):
 # ========================================================
 #                   USER AUTHENTICATION
 # ========================================================
-
-
-@api_view(["POST"])
-def login(request):
-    username = get_param(request, "username", None)
-    password = get_param(request, "password", None)
-    if (username is not None) and (password is not None):
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({"validated": True, "id": user.id, "token": token.key})
-    return Response({"validated": False, "code": 0, "message": "Could not validate"})
-
-
-@api_view(["POST"])
-def sign_up(request):
-    first_name = get_param(request, "firstname", "")
-    last_name = get_param(request, "lastname", "")
-    email = get_param(request, "email", None)
-    password = get_param(request, "password", None)
-    guest_id = get_param(request, "guest_id", None)
-
-    try:
-        user = User.objects.get(username=email)
-        if user is not None:
-            return Response(
-                {"validated": False, "code": 1, "message": "User already exists"}
-            )
-    except User.DoesNotExist:
-        pass
-    except Exception:
-        print(f"Could not retrieve user with email {email}")
-        return Response(
-            {"validated": False, "code": 2, "message": "Could not create user"}
-        )
-
-    try:
-        user = User.return_if_guest(guest_id)
-        if user is None:
-            user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                is_guest_account=False,
-            )
-        else:
-            user.username = email
-            user.email = email
-            user.set_password(password)
-            user.first_name = first_name
-            user.last_name = last_name
-            user.is_guest_account = False
-        user.save()
-        return Response({"validated": True, "id": user.id})
-    except Exception:
-        print(f"Could not create user with email {email}")
-        return Response(
-            {"validated": False, "code": 0, "message": "Invalid account details"}
-        )
 
 
 @api_view(["GET"])
