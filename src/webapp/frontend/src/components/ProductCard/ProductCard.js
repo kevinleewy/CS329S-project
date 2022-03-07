@@ -5,6 +5,7 @@ import { Card, Rate } from 'antd';
 const { Meta } = Card;
 
 export default function ProductCard({name, uri, price, rating, link}) {
+  console.log(name, price, rating, link);
   return (
     <Card
       hoverable
@@ -12,7 +13,7 @@ export default function ProductCard({name, uri, price, rating, link}) {
       cover={<img alt="name" src={uri} />}
     >
       <Meta title={price} description={""} />
-      <Rate disabled defaultValue={rating} />
+      <Rate disabled value={rating} />
     </Card>
   )
 }
