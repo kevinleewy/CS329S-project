@@ -161,7 +161,7 @@ class ML:
 @api_view(["POST"])
 def setup(request):
     ML.setup()
-    return Response("Setup already done", status=status.HTTP_200_OK)
+    return Response("Setup done", status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

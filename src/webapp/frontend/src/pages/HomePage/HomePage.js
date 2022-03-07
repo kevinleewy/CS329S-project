@@ -75,14 +75,14 @@ function HomePage() {
       axios.post(SETUP, {})
       .then(function (response) {
         console.log(response);
-        setTimeout(() => setSetupDone(true), 5000);
+        setTimeout(() => setSetupDone(!!userId), 6000);
         return response.data
       })
       .catch(function (error) {
         console.log(error);
       });
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {}, [selectedPage]);
   
