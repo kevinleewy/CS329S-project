@@ -20,14 +20,13 @@ import styled from "styled-components";
 import "antd/dist/antd.css"
 import './styles.css';
 
-import HeaderSteps from '../../components/Steps2/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 
 import CatalogPage from '../CatalogPage/CatalogPage';
 import SearchPage from '../SearchPage/SearchPage';
 import PersonalizationPage from '../PersonalizationPage/PersonalizationPage';
 
-import { OBTAIN_AUTH_TOKEN, AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT } from '../../apiPaths';
+import { AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;

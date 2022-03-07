@@ -18,7 +18,6 @@ import styled from "styled-components";
 import "antd/dist/antd.css"
 import './styles.css';
 
-import HeaderSteps from '../../components/Steps2/Steps';
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 
 import LandingPage from '../LandingPage/LandingPage';
@@ -26,7 +25,7 @@ import CatalogPage from '../CatalogPage/CatalogPage';
 import SearchPage from '../SearchPage/SearchPage';
 import PersonalizationPage from '../PersonalizationPage/PersonalizationPage';
 
-import { OBTAIN_AUTH_TOKEN, AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT, SETUP } from '../../apiPaths';
+import { AUTHENTICATE_TOKEN, GET_RECOMMENDATIONS, GUEST_ACCOUNT, SETUP } from '../../apiPaths';
 
 
 const { SubMenu } = Menu;
@@ -39,19 +38,9 @@ const Title = styled.div`
 `;
 
 const StyledSwipableCards = styled(SwipableCards)`
-  background: red; // #f9fafb;
-  // width: 300px;
-  // height: 400px;
-  // display: flex;
-  // align-items: center;
-  // justify-content: center;
-  // flex-direction: column;
-  // font-size: 150px;
   text-shadow: 0 10px 10px #d1d5db;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   border-radius: 50px;
-  border: red;
-  background-color: red !important;
 `
 
 function LogoIcon() {
