@@ -9,6 +9,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from model import ResnetDummy
+from unet import Unet
 from dataloader import load_datasets, get_data_transforms
 
 BASE_PATH = '/scratch/users/avento/deepfashion'
@@ -28,6 +29,10 @@ model_metadata = {
         "weights": os.path.join(BASE_PATH, '2022-02-28_16-52-37/best_model.pt'),
         "model_args": {'num_labels':36,'embedding_dim':512, 'freeze_pretrain':False},
     },
+    "unet_36_aug": {
+        "weights": os.path.join(BASE_PATH, '2022-03-05_01-09-36/best_model.pt'),
+        "model_args": {'num_labels':36,'n_classes': 1, 'embedding_dim': 512},
+    }
 }
 
 catalog_metadata = {
@@ -48,7 +53,10 @@ catalog_metadata = {
 def get_model(model_name):
     weights_path = model_metadata[model_name]["weights"]
     model_args = model_metadata[model_name]["model_args"]
-    model = ResnetDummy(**model_args)
+    if "unet" in model_name:
+        model = Unet(**model_args)
+    else:
+        model = ResnetDummy(**model_args)
     model.load_state_dict(torch.load(weights_path))
     model = model.to(DEVICE)
     return model
@@ -57,7 +65,10 @@ def get_model(model_name):
 def generate_save_catalog_embeddings(model_name, catalog_name):
     model = get_model(model_name)
     model.eval()
-    transforms = get_data_transforms()['test']
+    if "unet" in model_name:
+        transforms = get_data_transforms()['unet_test']
+    else:
+        transforms = get_data_transforms()['test']
     all_embeds = []
 
     img_dir = catalog_metadata[catalog_name].get("img_dir")

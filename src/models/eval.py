@@ -42,6 +42,10 @@ model_metadata = {
         "weights": os.path.join(BASE_PATH, '2022-02-28_16-52-37/best_model.pt'),
         "model_args": {'num_labels':36,'embedding_dim':512, 'freeze_pretrain':False},
     },
+    "unet_36_aug": {
+        "weights": os.path.join(BASE_PATH, '2022-03-05_01-09-36/best_model.pt'),
+        "model_args": {'num_labels':36,'n_classes': 1, 'embedding_dim': 512},
+    }
 }
 
 catalog_metadata = {
@@ -70,8 +74,12 @@ def get_embed(model_name, full_img_path, transform=get_data_transforms()["test"]
     weights_path = model_metadata[model_name]["weights"]
     model_args = model_metadata[model_name]["model_args"]
     
-    # TODO: Add Unet when those are done training !!!!!!!
-    model = ResnetDummy(**model_args)
+    if "unet" in model_name:
+        model = Unet(**model_args)
+        transform = get_data_transforms()["unet_test"] # update transforms for unet
+    else:
+        model = ResnetDummy(**model_args)
+        
     model.load_state_dict(torch.load(weights_path, map_location="cpu"))
     model = model.to(DEVICE)
     model.eval()
@@ -221,7 +229,7 @@ def generate_plot_and_query_user(img_path, catalog_names, num_to_sample=5):
         val = None
         while val not in ["y", "n"]:
             val = input(f"Do your like image{idx} (y or n): ")
-        outputs.append((model, val, catalog_distribution))
+        outputs.append((img_path, model, val, catalog_distribution))
     
     return outputs
 

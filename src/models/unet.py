@@ -57,7 +57,7 @@ class Unet(nn.Module):
                       padding=0),
         )
 
-        self.embedding = nn.Linear(1024 * 14 * 14, embedding_dim)
+        self.embedding = nn.Linear(1024, embedding_dim) 
         self.classifier = nn.Sequential(
             nn.ReLU(),
             nn.Linear(embedding_dim, num_labels)
@@ -95,7 +95,10 @@ class Unet(nn.Module):
         # # End of expanding path
         seg_out = self._output(torch.cat((c_out_1, e_input_4), axis=1))
 
-        embedding = self.embedding(bottleneck.reshape(batch_size, -1))
+        # batch size, 1024, 14, 14 => batch size, 1024
+        global_avg_pool = bottleneck.mean(dim=(-2,-1))
+        embedding = self.embedding(global_avg_pool)
+        # embedding = self.embedding(bottleneck.reshape(batch_size, -1))
         classifier_out = self.classifier(embedding)
 
         return classifier_out, seg_out
@@ -112,7 +115,9 @@ class Unet(nn.Module):
         # Bottleneck connects contracting end and expanding start
         bottleneck = self._bottleneck(self._maxpool(c_out_4))
 
-        embedding = self.embedding(bottleneck.reshape(batch_size, -1))
+        global_avg_pool = bottleneck.mean(dim=(-2,-1))
+        embedding = self.embedding(global_avg_pool)
+        # embedding = self.embedding(bottleneck.reshape(batch_size, -1))
         return embedding
 
 

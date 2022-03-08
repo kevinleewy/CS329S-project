@@ -75,8 +75,8 @@ def train():
                 imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
                 
                 if SEGMENT:
-                    segs.to(DEVICE).float()
-                    segLossMask.to(DEVICE)
+                    segs = segs.to(DEVICE).float()
+                    segLossMask = segLossMask.to(DEVICE)
 
                 model.zero_grad()
                 out = model(imgs)
@@ -110,8 +110,8 @@ def train():
                     imgs, attributes = imgs.to(DEVICE).float(), attributes.to(DEVICE).float()
 
                     if SEGMENT:
-                        segs.to(DEVICE).float()
-                        segLossMask.to(DEVICE)
+                        segs = segs.to(DEVICE).float()
+                        segLossMask = segLossMask.to(DEVICE)
 
                     out = model(imgs)
 

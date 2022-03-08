@@ -35,6 +35,12 @@ default_data_transforms = {
         transforms.ToTensor(),
         transforms.Normalize(NORM_MEAN, NORM_STD)
     ]),
+    'unet_test': transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(CROP_SIZE),
+        transforms.ToTensor(),
+        transforms.Normalize(0, 1)
+    ]),
 }
 
 unet_combined_transforms = {
