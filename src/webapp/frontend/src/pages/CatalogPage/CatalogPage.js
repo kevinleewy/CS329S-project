@@ -38,7 +38,14 @@ const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
 
 const Title = styled.div`
-  font-size: 24px;
+  font-size: 28px;
+  color: black;
+  text-align: left;
+  font-weight: bold;
+`;
+
+const Description = styled.div`
+  font-size: 18px;
   color: black;
   text-align: left;
 `;
@@ -155,6 +162,8 @@ function FilterMenu(min, max, onSubmit) {
   const [highValue, setHighValue] = useState(max);
   // const [rating, setRating] = useState(0);
 
+  const checkboxDefault = localStorage?.showWelcomeModal;
+
   const onFinish = (results) => {
     const final_results = {
       ...results,
@@ -168,30 +177,18 @@ function FilterMenu(min, max, onSubmit) {
     <Form style={{width: "630px", padding: "16px"}} onFinish={onFinish}>
       <div style={{fontSize: "18px", fontWeight: "bold"}}>Filter Outfits</div>
       <Divider style={{margin: "8px 0 16px"}} />
-      <Row>
-        <Col span={12}>
-          <Form.Item name="type">
-            <Checkbox.Group>
-              <Checkbox value="mens" style={{ lineHeight: '32px' }}>
-                Men's
-              </Checkbox>
-              <Checkbox value="womens" style={{ lineHeight: '32px' }}>
-                Women's
-              </Checkbox>
-            </Checkbox.Group>
-          </Form.Item>
-        </Col>
+      <div key="price">
+        <div>Price</div>
+        <DecimalStep min={min} max={max} lowValue={lowValue} setLowValue={setLowValue} highValue={highValue} setHighValue={setHighValue} />
+      </div>
+      <Row style={{marginTop: "24px"}}>
         <Col span={12}>
           <Form.Item name="rating" label="Minimum Rating:">
             <Rate allowHalf />
           </Form.Item>
         </Col>
       </Row>
-      <div key="price">
-        <div>Price</div>
-        <DecimalStep min={min} max={max} lowValue={lowValue} setLowValue={setLowValue} highValue={highValue} setHighValue={setHighValue} />
-      </div>
-      <Divider style={{margin: "24px 0 12px"}} />
+      <Divider style={{margin: "4px 0 12px"}} />
       <Form.Item  style={{margin: 0}}>
         <Button type="primary" htmlType="submit" style={{margin: 0}}>
           Filter
@@ -208,6 +205,7 @@ function CatalogPage({userId}) {
   const [searchResults, setSearchResults] = useState([]);
   const [visible, setVisible] = useState(false);
   const [filters, setFilters] = useState({});
+  const [maxResultsPrice, setMaxResultsPrice] = useState(1000);
 
   useEffect(() => {
     if (!!userId) {
@@ -225,6 +223,14 @@ function CatalogPage({userId}) {
 
   useEffect(() => {}, [searchResults, filters]);
 
+  useEffect(() => {
+    if (!!searchResults) {
+      setMaxResultsPrice(Math.max.apply(Math, searchResults.map(item => {
+        return !item ? -1 : Math.round(parseFloat(item.price.slice(1)) + 0.5);
+      })));
+    }
+  }, [searchResults]);
+
   const onSubmit = (filters) => {
     setFilters(filters);
   };
@@ -234,7 +240,12 @@ function CatalogPage({userId}) {
     const item_matches = (
       (!filters.rating || (item.rating && (item.rating >= filters.rating))) &&
       (!filters.minPrice || (item.rating && (item_price >= filters.minPrice))) &&
-      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice)))
+      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice))) &&
+      (
+        !item?.sex ||
+        (item.sex == "Men" && sessionStorage.showMensClothes) ||
+        (item.sex == "Women" && sessionStorage.showWomensClothes)
+      )
     );
     return item_matches;
   }
@@ -254,13 +265,16 @@ function CatalogPage({userId}) {
               Catalog
             </Breadcrumb.Item>
           </Breadcrumb>
-          <Title style={{marginBottom: "12px"}}>Product Catalog</Title>
+          <Title>Product Catalog</Title>
+          <Description style={{marginBottom: "12px"}}>
+            Explore products curated based on your preferences from several different online catalogs.
+          </Description>
         </Col>
         <Col span={2}>
           <Dropdown.Button
             style={{ margin: '32px 0 0', fontSize: "25px"}}
             onClick={handleButtonClick}
-            overlay={FilterMenu(0, 100, onSubmit)}
+            overlay={FilterMenu(0, maxResultsPrice, onSubmit)}
             trigger={["click"]}
             icon={<SlidersOutlined />}
             visible={visible}
