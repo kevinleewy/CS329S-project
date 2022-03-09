@@ -240,7 +240,12 @@ function CatalogPage({userId}) {
     const item_matches = (
       (!filters.rating || (item.rating && (item.rating >= filters.rating))) &&
       (!filters.minPrice || (item.rating && (item_price >= filters.minPrice))) &&
-      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice)))
+      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice))) &&
+      (
+        !item?.sex ||
+        (item.sex == "Men" && sessionStorage.showMensClothes) ||
+        (item.sex == "Women" && sessionStorage.showWomensClothes)
+      )
     );
     return item_matches;
   }
