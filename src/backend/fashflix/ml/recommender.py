@@ -35,7 +35,7 @@ class KNearestRecommender:
 		distances, indices = self.recommender.kneighbors(query_embedding)
 		final_indices, prev_distance = [], None
 		for distance, index in zip(distances[0], indices[0]):
-			if abs(distance - prev_distance) >= eps: # To ensure no catalog dupes
+			if prev_distance is None or abs(distance - prev_distance) >= eps: # To ensure no catalog dupes
 				prev_distance = distance
 				final_indices.append(index)
 				if len(final_indices) == self.n_neighbors:
