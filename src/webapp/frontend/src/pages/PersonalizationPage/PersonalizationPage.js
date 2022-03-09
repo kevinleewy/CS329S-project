@@ -110,12 +110,21 @@ function SearchPage({userId}) {
     }
   }, [votes])
 
+  const matchesPreferences = (item) => {
+    const item_matches = (
+      !item?.sex ||
+      (item.sex === "Men" && sessionStorage.showMensClothes === "true") ||
+      (item.sex === "Women" && sessionStorage.showWomensClothes === "true")
+    );
+    return item_matches;
+  };
+
   useEffect(() => {
     if (!!userId) {
       axios.post(GET_RECOMMENDATIONS, {userId})
       .then(function (response) {
         console.log(response);
-        setSearchResults([...response.data]);
+        setSearchResults([...response.data].filter(matchesPreferences));
         return response.data
       })
       .catch(function (error) {
