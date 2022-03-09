@@ -21,7 +21,14 @@ const { Step } = Steps;
 const { Dragger } = Upload;
 
 const Title = styled.div`
-  font-size: 24px;
+  font-size: 28px;
+  color: black;
+  text-align: left;
+  font-weight: bold;
+`;
+
+const Description = styled.div`
+  font-size: 18px;
   color: black;
   text-align: left;
 `;
@@ -127,7 +134,10 @@ function SearchPage({userId}) {
           Personalize
         </Breadcrumb.Item>
       </Breadcrumb>
-      <Title style={{marginBottom: "12px"}}>Personalize your Recommendations</Title>
+      <Title>Personalize your Recommendations</Title>
+      <Description style={{marginBottom: "12px"}}>
+        Swipe through a series of outfits to help us better learn your preferences and give better recommendations.
+      </Description>
       <br />
       
       {(searchResults.length > 0) && (
