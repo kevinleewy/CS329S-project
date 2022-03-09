@@ -20,6 +20,7 @@ import './styles.css';
 
 import SwipableCards from '../../components/SwipableCards/SwipableCards';
 
+import NavigationPage from '../NavigationPage/NavigationPage';
 import LandingPage from '../LandingPage/LandingPage';
 import CatalogPage from '../CatalogPage/CatalogPage';
 import SearchPage from '../SearchPage/SearchPage';
@@ -55,7 +56,7 @@ const ACCEPTED_STATUS_CODE = 200;
 
 function HomePage() {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedPage, setSelectedPage] = useState("catalog");
+  const [selectedPage, setSelectedPage] = useState("home");
   const [userId, setUserId] = useState(localStorage?.userId);
   const [setupDone, setSetupDone] = useState(false);
 
@@ -125,8 +126,20 @@ function HomePage() {
 
 
   return !setupDone ? (<LandingPage />) : (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={(c) => {setCollapsed(c)}}>
+    <Layout hasSider style={{ minHeight: '100vh' }}>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={(c) => {setCollapsed(c)}}
+        // style={{ 
+        //   overflow: 'auto',
+        //   height: '100vh',
+        //   position: 'fixed',
+        //   left: 0,
+        //   top: 0,
+        //   bottom: 0,
+        // }}
+      >
         {collapsed ? (
           <>
             <div className="logo" style={{ marginTop: "16px" }}>🧥</div>
@@ -137,23 +150,27 @@ function HomePage() {
             <span className="slow-visible" style={{fontSize: "35px", marginLeft: "5px", marginRight: "20px"}}>FashFlix</span>
           </div>
         )}
-        <Menu theme="dark" defaultSelectedKeys={[selectedPage]} mode="inline">
+        <Menu theme="dark" selectedKeys={[selectedPage]} mode="inline">
+          <Menu.Item key="home" icon={<HomeOutlined />} onClick={() => setSelectedPage("home")}>
+            Home
+          </Menu.Item>
           <Menu.Item key="catalog" icon={<AppstoreOutlined />} onClick={() => setSelectedPage("catalog")}>
             Product Catalog
-          </Menu.Item>
-          <Menu.Item key="search" icon={<SkinOutlined />} onClick={() => setSelectedPage("search")}>
-            Search
           </Menu.Item>
           <Menu.Item key="personalize" icon={<FireOutlined />} onClick={() => setSelectedPage("personalize")}>
             Personalize
           </Menu.Item>
+          <Menu.Item key="search" icon={<SkinOutlined />} onClick={() => setSelectedPage("search")}>
+            Search
+          </Menu.Item>
         </Menu>
       </Sider>
-      <Layout className="site-layout">
+      <Layout style={{ /*marginLeft: 200*/ }} className="site-layout">
         <Content style={{ margin: '16px 32px' }}>
+          {(selectedPage === "home") && <NavigationPage userId={userId} setSelectedPage={setSelectedPage} />}
           {(selectedPage === "catalog") && <CatalogPage userId={userId} />}
-          {(selectedPage === "search") && <SearchPage userId={userId} />}
           {(selectedPage === "personalize") && <PersonalizationPage userId={userId} />}
+          {(selectedPage === "search") && <SearchPage userId={userId} />}
         </Content>
         {false && (<Footer style={{ textAlign: 'center' }}>Ant Design ©2018 Created by Ant UED</Footer>)}
       </Layout>
