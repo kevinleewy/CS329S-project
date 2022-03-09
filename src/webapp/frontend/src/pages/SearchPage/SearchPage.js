@@ -17,7 +17,14 @@ import { GET_RECOMMENDATIONS, RATINGS } from '../../apiPaths';
 
 
 const Title = styled.div`
-  font-size: 24px;
+  font-size: 28px;
+  color: black;
+  text-align: left;
+  font-weight: bold;
+`;
+
+const Description = styled.div`
+  font-size: 18px;
   color: black;
   text-align: left;
 `;
