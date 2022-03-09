@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
 
-import { Carousel, Breadcrumb, Button, Col, Row } from 'antd';
+import { Carousel, Divider, Breadcrumb, Button, Col, Row, Form, Checkbox, Modal } from 'antd';
 import {
   HomeOutlined,
   FireTwoTone,
@@ -16,9 +16,10 @@ import ProductCard from '../../components/ProductCard/ProductCard';
 import { GET_RECOMMENDATIONS, RATINGS } from '../../apiPaths';
 
 const Title = styled.div`
-  font-size: 24px;
+  font-size: 28px;
   color: black;
   text-align: left;
+  font-weight: bold;
 `;
 
 const colors = {
@@ -82,6 +83,25 @@ function NavigationPage({userId, setSelectedPage}) {
   const [imageUrl, setImageUrl] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
 
+  // var currentShowWelcomeModal = sessionStorage?.showWelcomeModal;
+  // // const notSet = currentShowWelcomeModal == null
+  // console.log("currentShowWelcomeModal:", currentShowWelcomeModal)
+  // const [showWelcomeModal, setShowWelcomeModal] = useState((currentShowWelcomeModal == null) || currentShowWelcomeModal);
+  // const handleWelcomeModalOk = (results) => {
+  //   console.log("results:", results);
+  //   sessionStorage.setItem("showWelcomeModal", false);
+  //   setShowWelcomeModal(false);
+  // }
+
+  const [showWelcomeModal, setShowWelcomeModal] = useState(!sessionStorage?.dontShowWelcomeModal);
+  const handleWelcomeModalOk = (results) => {
+    console.log("results:", results);
+    setShowWelcomeModal(false);
+    sessionStorage.dontShowWelcomeModal = true;
+    sessionStorage.showMensClothes = results.type.indexOf("mens") !== -1;
+    sessionStorage.showWomensClothes = results.type.indexOf("womens") !== -1;
+  }
+
   useEffect(() => {
     if (!!userId) {
       axios.post(GET_RECOMMENDATIONS, {userId})
@@ -105,6 +125,29 @@ function NavigationPage({userId, setSelectedPage}) {
       </Breadcrumb>
       <Title style={{marginBottom: "12px"}}>Welcome to FashFlix!</Title>
       <br />
+
+      <Modal
+        title="Welcome 👋"
+        centered
+        footer={[]}
+        visible={showWelcomeModal}
+      >
+        <span style={{fontSize: "16px"}}>What types of clothes would you like to see?</span>
+        <Form style={{width: "500px"}} onFinish={handleWelcomeModalOk}>
+          <Form.Item name="type" valuePropName="checked">
+            <Checkbox.Group>
+              <Checkbox value="mens" style={{ fontSize: "16px" }}>Men's</Checkbox>
+              <Checkbox value="womens" style={{ fontSize: "16px" }}>Women's</Checkbox>
+            </Checkbox.Group>
+          </Form.Item>
+
+          <Form.Item style={{margin: 0}}>
+            <Button type="primary" htmlType="submit">
+              Confirm
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
       
       <Row gutter={32}>
         <Col span={8}>
@@ -121,7 +164,7 @@ function NavigationPage({userId, setSelectedPage}) {
             <FireTwoTone twoToneColor={colors.rate.dark} style={{fontSize: "40px"}} />
             <div style={{color: colors.rate.dark, fontWeight: "bold"}}>Personalize</div>
             <p style={{fontSize: "20px", marginTop: "32px"}}>
-              Rate a series of outfits to help us better learn your preferences and get better recommendations.
+              Swipe through a series of outfits to help us better learn your preferences and give better recommendations.
             </p>
           </RateNavigationCard>
         </Col>
