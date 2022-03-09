@@ -41,6 +41,10 @@ class Config:
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     VOTES_DF_PATH = "votes.csv"
 
+    NUM_RECOMMENDATIONS = 200
+    NUM_USER_RECOMMENDATIONS = 20
+    NUM_IMAGE_RECOMMENDATIONS = 10
+
     OPTIMIZER = WeightedPreferenceOptimizer
 
 
@@ -56,7 +60,7 @@ class ML:
         print(f"Metadata Database: {cls.database.metadata_database.read_df().count()}")
         print(f"Embeddings Database: {cls.database.embeddings_database.read_df().count()}")
 
-        recommender = KNearestRecommender()
+        recommender = KNearestRecommender(n_neighbors=Config.NUM_RECOMMENDATIONS)
         embeddings_df = cls.database.embeddings_database.read_df()
         embeddings_pdf = embeddings_df.toPandas()
         embeddings_pdf["embeddings"] = embeddings_pdf.embeddings_json.apply(lambda embedding_json: np.array(json.loads(embedding_json), dtype="float"))
@@ -79,14 +83,15 @@ class ML:
 
         cls.embedding_callback = make_embedding_callback(get_img_embedding)
 
-        def model_callback(preference_vector):
+        def model_callback(preference_vector, n_neighbors):
             if preference_vector is None:
                 preference_vector = cls.default_preference_vector
 
             preference_vector = np.array(preference_vector)
-            print("preference_vector shape:", preference_vector.shape)
+            # print("preference_vector shape:", preference_vector.shape)
             recommendation_uuids = recommender.get_recommendations(preference_vector, embeddings_pdf)
-            recommendation_uuids = recommendation_uuids[0]
+            # print("n_neighbors:", n_neighbors)
+            recommendation_uuids = recommendation_uuids[:n_neighbors] #recommendation_uuids[0][:n_neighbors]
             votes_df = pd.DataFrame({"recommendation_uuid": recommendation_uuids})
             votes_df.to_csv(Config.VOTES_DF_PATH, index=False)
             recommendations = cls.database.get_images_and_metadata(recommendation_uuids)
@@ -104,7 +109,7 @@ class ML:
         input_image = InputImage(image_url, "input_image")
         input_embeddings = cls.embedding_callback([input_image])
         input_embedding = [input_embeddings[0]] # work on single image
-        return cls.model_callback(input_embedding)
+        return cls.model_callback(input_embedding, Config.NUM_IMAGE_RECOMMENDATIONS)
 
 
     @classmethod
@@ -132,7 +137,7 @@ class ML:
         user_vector = cls.get_user_vector(user_id)
         if user_vector is None:
             raise Exception("No vector produced")
-        return cls.model_callback(user_vector)
+        return cls.model_callback(user_vector, Config.NUM_USER_RECOMMENDATIONS)
 
 
     @classmethod
