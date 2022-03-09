@@ -4,12 +4,17 @@
 import React, { useEffect, useState } from "react"
 import styled from "styled-components"
 
+import { DislikeTwoTone, LikeTwoTone, CloseCircleTwoTone, CloseCircleFilled, HeartTwoTone, HeartFilled } from '@ant-design/icons';
+
 import { CardStack } from "./CardStack"
 
 const CardStackWrapper = styled(CardStack)`
   // background: #1f2937;
   // background: #f9fafb;
   height: 100%;
+  width: 85%;
+  margin: auto;
+  // display: "inline-flex"
 
   // box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   // border-radius: 8px;
@@ -77,10 +82,11 @@ export const SwipableCards = ({imgUris, onSubmitRatings}) => {
   // console.log("imgs:", imgs)
   const last_card_emoji = "🙈" //renderData.args["last_card_emoji"] || "🙈"
 
-  useEffect(() => {
-    // Update the document title using the browser API
-    document.title = `${imgs.lengths} images`;
-  });
+  // useEffect(() => {
+  //   // Update the document title using the browser API
+  //   // document.title = `${imgs.lengths} images`;
+  //   setTimeout(() => {}, 5000);
+  // });
 
   // const theme = renderData.theme
   // const style = {}
@@ -91,7 +97,41 @@ export const SwipableCards = ({imgUris, onSubmitRatings}) => {
   // }
 
   return (
-    <div id="SwipableCards" style={{ height: "500px" }}>
+    <div id="SwipableCards" style={{ height: "500px", overflow: "hidden", marginTop: "50px" }}>
+      {true && (<div
+        style={{
+          borderRadius: "50%",
+          height: "500px",
+          width: "500px",
+          background: "#f0d3d7", // "#cb7c8a", //"#f6e0f6",
+          position: "absolute",
+          transform: "translateX(-250px)",
+          zIndex: 2,
+          // display: "flex",
+          textAlign: "right",
+          // padding: "100px",
+          // alignItems: "right",
+          // justifyContent: "center",
+        }}
+      >
+        <CloseCircleFilled twoToneColor={"red" /*"#eb2f96"*/} style={{color: "red", marginTop: "50%", fontSize: "100px", transform: "translateY(-50%)", marginRight: "20%",}} />
+      </div>)}
+      {true && (<div
+        style={{
+          borderRadius: "50%",
+          height: "500px",
+          width: "500px",
+          background: "#d0e3cc",
+          position: "absolute",
+          // top: "0",
+          transform: "translateX(218px)",
+          textAlign: "left",
+          right: "0",
+          zIndex: 2,
+        }}
+      >
+        <HeartFilled twoToneColor="#00a300" style={{color: "#00a300", marginTop: "50%", fontSize: "100px", transform: "translateY(-50%)", marginLeft: "20%"}} />
+      </div>)}
       <CardStackWrapper onVote={onVote}>
         <CardItem data-value="pancakes" disabled>
           {last_card_emoji}

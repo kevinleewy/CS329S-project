@@ -131,6 +131,7 @@ function HomePage() {
         collapsible
         collapsed={collapsed}
         onCollapse={(c) => {setCollapsed(c)}}
+        style={{ zIndex: 200 }}
         // style={{ 
         //   overflow: 'auto',
         //   height: '100vh',
