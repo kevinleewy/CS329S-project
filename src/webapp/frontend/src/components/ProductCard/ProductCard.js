@@ -13,8 +13,8 @@ export default function ProductCard({name, uri, price, rating, product_url}) {
       cover={<img alt="name" src={uri} style={{ height: 300 }} />}
       onClick={() => window.open(product_url)}
     >
-      <Meta title={price} description={""} style={{ height: 60 }} />
-      {rating && (<Rate disabled value={rating} />)}
+      <Meta title={name} description={price} style={{ height: 60 }} />
+      <Rate disabled value={rating} />
     </Card>
   )
 }
