@@ -98,8 +98,12 @@ function NavigationPage({userId, setSelectedPage}) {
     console.log("results:", results);
     setShowWelcomeModal(false);
     sessionStorage.dontShowWelcomeModal = true;
-    sessionStorage.showMensClothes = results.type.indexOf("mens") !== -1;
-    sessionStorage.showWomensClothes = results.type.indexOf("womens") !== -1;
+    if (results.type.length === 0) {
+      sessionStorage.showWomensClothes = true
+    } else {
+      sessionStorage.showMensClothes = results.type.indexOf("mens") !== -1;
+      sessionStorage.showWomensClothes = results.type.indexOf("womens") !== -1;
+    }
   }
 
   useEffect(() => {
@@ -133,7 +137,13 @@ function NavigationPage({userId, setSelectedPage}) {
         visible={showWelcomeModal}
       >
         <span style={{fontSize: "16px"}}>What types of clothes would you like to see?</span>
-        <Form style={{width: "500px"}} onFinish={handleWelcomeModalOk}>
+        <Form
+          style={{width: "500px"}}
+          onFinish={handleWelcomeModalOk}
+          initialValues={{
+            "type": ["womens"],
+          }}
+        >
           <Form.Item name="type" valuePropName="checked">
             <Checkbox.Group>
               <Checkbox value="mens" style={{ fontSize: "16px" }}>Men's</Checkbox>
