@@ -81,8 +81,8 @@ function beforeUpload(file) {
 
 
 function handleButtonClick(e) {
-  message.info('Click on left button.');
-  console.log('click left button', e);
+  // message.info('Click on left button.');
+  // console.log('click left button', e);
 }
 
 
@@ -278,17 +278,17 @@ function CatalogPage({userId}) {
           </Description>
         </Col>
         <Col span={2}>
-          <Dropdown.Button
-            style={{ margin: '32px 0 0', fontSize: "25px"}}
+          <Dropdown
             onClick={handleButtonClick}
-            overlay={FilterMenu(0, maxResultsPrice, onSubmit)}
+            overlay={FilterMenu(0, 1000, onSubmit)}
             trigger={["click"]}
-            icon={<SlidersOutlined />}
             visible={visible}
             onVisibleChange={setVisible}
           >
-            Filter
-          </Dropdown.Button>
+            <Button style={{ margin: '32px 0 0'}}>
+              Filter <SlidersOutlined />
+            </Button>
+          </Dropdown>
         </Col>
       </Row>
       

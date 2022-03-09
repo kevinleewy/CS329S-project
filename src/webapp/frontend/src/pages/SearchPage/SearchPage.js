@@ -59,7 +59,7 @@ function SearchPage({userId}) {
       axios.post(GET_RECOMMENDATIONS, {imageUrl, userId})
       .then(function (response) {
         console.log(response);
-        setSearchResults([...response.data].filter(matchesPreferences));
+        setSearchResults([...response.data].filter(matchesPreferences).slice(0, 12));
         setTimeout(() => {
           changeCurrent(2);
         }, 3000);
