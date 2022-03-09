@@ -245,13 +245,13 @@ function CatalogPage({userId}) {
   const matchesFilters = (item) => {
     const item_price = parseFloat(item.price.slice(1));
     const item_matches = (
-      (!filters.rating || (item.rating && (item.rating >= filters.rating))) &&
-      (!filters.minPrice || (item.rating && (item_price >= filters.minPrice))) &&
-      (!filters.maxPrice || (item.rating && (item_price <= filters.maxPrice))) &&
+      (!filters.rating || !item.rating || (item.rating && (item.rating >= filters.rating))) &&
+      (!filters.minPrice || (!!item_price && (item_price >= filters.minPrice))) &&
+      (!filters.maxPrice || (!!item_price && (item_price <= filters.maxPrice))) &&
       (
         !item?.sex ||
-        (item.sex == "Men" && sessionStorage.showMensClothes) ||
-        (item.sex == "Women" && sessionStorage.showWomensClothes)
+        (item.sex == "Men" && sessionStorage.showMensClothes === "true") ||
+        (item.sex == "Women" && sessionStorage.showWomensClothes === "true")
       )
     );
     return item_matches;
