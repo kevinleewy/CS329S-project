@@ -6,6 +6,7 @@ from PIL import Image
 import json
 import random
 import pickle
+from scipy.spatial import distance
 
 from model import ResnetDummy
 from unet import Unet
@@ -20,14 +21,26 @@ ALL of the following must be directly in the BASE_PATH folder
 - img folder for gallery (the URIs)
 """
 
-# DATA_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark/Img'
-# BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
-BASE_PATH = '/scratch/users/avento/deepfashion'
-DATA_PATH = BASE_PATH
+DATA_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/data/In-shop Clothes Retrieval Benchmark/Img'
+BASE_PATH = '/Users/kevinlee/Data/Stanford/CS329S/project/CS329S-project/deepfashion'
+# BASE_PATH = '/scratch/users/avento/deepfashion'
+# DATA_PATH = BASE_PATH
 CATALOGS_PATH = os.path.join(BASE_PATH, 'catalogs')
 QUERY_PATH = os.path.join(BASE_PATH, 'queries')
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 NUM_TO_SAMPLE = 5
+COSINE_DISTANCE = True
+SEGMENT_FIRST = False
+
+segment_model_metadata = {
+    "weights": os.path.join(BASE_PATH, 'pretrained_unet/pretrained_unet_og.pt'),
+    # "model_args": {'num_labels':36,'n_classes': 7, 'embedding_dim': 512,
+    #                 "pretrained_path": os.path.join(BASE_PATH, 'pretrained_unet/pretrained_unet_og.pt')
+    # },
+    "model_args": {'num_labels':36,'n_classes': 1, 'embedding_dim': 512,
+                    "pretrained_path": os.path.join(BASE_PATH, '2022-03-05_01-09-36/best_model.pt')
+    },
+}
 
 model_metadata = {
     "model_13": {
@@ -63,7 +76,6 @@ catalog_metadata = {
     "zappos": {
         "img_dir":  os.path.join(BASE_PATH, "webscraped_images", "zappos"),
         "catalog_dir": os.path.join(CATALOGS_PATH, "catalog_zappos.json")
-        
     }
 }
 
@@ -74,6 +86,13 @@ def get_embed(model_name, full_img_path, transform=get_data_transforms()["test"]
     weights_path = model_metadata[model_name]["weights"]
     model_args = model_metadata[model_name]["model_args"]
     
+    if SEGMENT_FIRST:
+        segment_model_args = segment_model_metadata["model_args"]
+        segment_model = Unet(**segment_model_args)
+        segment_model = segment_model.to(DEVICE)
+        segment_model.eval()
+        segment_model_transform = get_data_transforms()["unet_test"]
+
     if "unet" in model_name:
         model = Unet(**model_args)
         transform = get_data_transforms()["unet_test"] # update transforms for unet
@@ -85,9 +104,44 @@ def get_embed(model_name, full_img_path, transform=get_data_transforms()["test"]
     model.eval()
     
     img = Image.open(full_img_path).convert('RGB')
-    cur_img = transform(img).unsqueeze(0).to(DEVICE)
+
+    if SEGMENT_FIRST:
+        img_to_segment = segment_model_transform(img).unsqueeze(0).to(DEVICE)
+        _, seg_maps = segment_model(img_to_segment)
+        seg_map = seg_maps[0]
+
+        foreground_mask = torch.where(seg_map[0] > 0, 1, 0)
+        del segment_model
+
+    cur_img = transform(img).to(DEVICE)
+
+    if SEGMENT_FIRST:
+        cur_img = cur_img * foreground_mask.unsqueeze(0)
+
+    cur_img = cur_img.unsqueeze(0)
+
     embedding = model.embed(cur_img).cpu().detach().numpy().flatten()
     del model
+
+    # Prints segmentation images
+    NORM_MEAN = np.array([0.485, 0.456, 0.406])
+    NORM_STD = np.array([0.229, 0.224, 0.225])
+    
+    # plt.figure()
+    # fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(25, 16))
+    
+    # ax[0].imshow(img)
+    # ax[1].imshow(foreground_mask.cpu().detach().numpy(), cmap=plt.cm.gray)
+    # img_to_plot = cur_img.cpu().detach().numpy()[0].transpose(1,2,0)
+    # img_to_plot = img_to_plot * NORM_STD + NORM_MEAN
+    # ax[2].imshow(img_to_plot)
+
+    # temp_save_path = os.path.join(BASE_PATH, "SegmentTest.png")
+    # plt.savefig(temp_save_path)
+    # plt.close()
+
+    # exit()
+
     return embedding
 
 
@@ -140,9 +194,12 @@ def get_img_from_index(catalog_name, all_catalogs, index):
 def get_closest_embeds(img_embed, all_embeds, num_to_sample, epsilon=1e-8):
     distances = []
     for index, embed in enumerate(all_embeds):
-        distance = np.sum((embed - img_embed) ** 2)
-        if distance > epsilon: # To ensure not same image as query
-            distances.append((index, distance))
+        if COSINE_DISTANCE:
+            dist = distance.cosine(embed, img_embed)
+        else:
+            dist = distance.euclidean(embed, img_embed)
+        if dist > epsilon: # To ensure not same image as query
+            distances.append((index, dist))
     
     distances.sort(key=lambda x: x[1], reverse=False)
     out = []
